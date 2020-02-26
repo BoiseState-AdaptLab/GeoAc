@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdlib.h>
 #include <iostream>
 #include <iomanip>
@@ -231,15 +232,23 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             caustics.close();
         }
     }
+
+    cout << omp_get_max_threads() << endl;
     
-	double** solution;
-	GeoAc_BuildSolutionArray(solution,length);
+    double*** solutions;
+    solutions = (double***)malloc(sizeof(double**) * omp_get_max_threads());
+    #pragma omp parallel default(none)
+    {
+    int tid = omp_get_thread_num();
+    GeoAc_BuildSolutionArray(solutions[tid],length);
+    double** solution = solutions[tid];
+
     
-    for(double phi = phi_min;           phi <= phi_max;     phi+=phi_step){
-        for(double theta = theta_min;   theta <= theta_max; theta+=theta_step){
+    for(int phi = phi_min;           phi <= phi_max;     phi+=phi_step){
+        for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
             cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
-            double GeoAc_theta = theta*Pi/180.0;
-            double GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
+            double GeoAc_theta = double(theta)*Pi/180.0;
+            double GeoAc_phi = Pi/2.0 - double(phi)*Pi/180.0;
             
             GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0, GeoAc_theta, GeoAc_phi);
             travel_time_sum = 0.0;
@@ -320,13 +329,13 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             GeoAc_ClearSolutionArray(solution,k);
         }
         results << '\n';
-    }
-	
+    }	
 	raypath.close();
 	results.close();
 	caustics.close();
 	GeoAc_DeleteSolutionArray(solution, length);
 
+    }
 }
 
 void GeoAcGlobal_RunInteractive(char* inputs[], int count){
