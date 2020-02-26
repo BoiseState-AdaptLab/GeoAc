@@ -16,10 +16,10 @@ using namespace std;
 extern int z_cnt;           // Number of vertical points
 extern double* z_vals;      // z_k elements
 
-extern double* T_vals;      // Temperature at z_k
-extern double* u_vals;      // E-W winds at z_k
-extern double* v_vals;      // N-S winds at z_k
-extern double* rho_vals;    // Density at z_k
+//static double* T_vals;      // Temperature at z_k
+//static double* u_vals;      // E-W winds at z_k
+//static double* v_vals;      // N-S winds at z_k
+//static double* rho_vals;    // Density at z_k
 
 //----------------------------------------//
 //----------File IO Manipulation----------//

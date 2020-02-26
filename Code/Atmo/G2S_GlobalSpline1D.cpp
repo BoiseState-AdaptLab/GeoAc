@@ -47,10 +47,10 @@ int r_cnt;          // Number of vertical points
 int accel;          // Acceleration index
 double* r_vals;     // r_k elements (r_cnt length)
 
-double* T_vals;    // Temperature at r_k
-double* u_vals;    // E-W winds at r_k
-double* v_vals;    // N-S winds at r_k
-double* rho_vals;  // Density at r_k
+static double* T_vals;    // Temperature at r_k
+static double* u_vals;    // E-W winds at r_k
+static double* v_vals;    // N-S winds at r_k
+static double* rho_vals;  // Density at r_k
 
 //----------------------------------------//
 //----------File IO Manipulation----------//
