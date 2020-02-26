@@ -238,10 +238,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     for(double phi = phi_min;           phi <= phi_max;     phi+=phi_step){
         for(double theta = theta_min;   theta <= theta_max; theta+=theta_step){
             cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
-            GeoAc_theta = theta*Pi/180.0;
-            GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
+            double GeoAc_theta = theta*Pi/180.0;
+            double GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
             
-            GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0);
+            GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0, GeoAc_theta, GeoAc_phi);
             travel_time_sum = 0.0;
             attenuation = 0.0;
             r_max = 0.0;
@@ -267,7 +267,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                             raypath << solution[m][0] - r_earth;
                             raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                             raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m));}
+                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
+                                                                                          GeoAc_phi));}
                             else{           raypath << '\t' << 0.0;}
                             raypath << '\t' << -attenuation;
                             raypath << '\t' << travel_time_sum << '\n';
@@ -308,7 +309,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 results << '\t' << r_max;
                 results << '\t' << inclination;
                 results << '\t' << back_az;
-                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k));}
+                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi));}
                 else{           results << '\t' << 0.0;}
                 results << '\t' << -attenuation;
                 results << '\n';
@@ -417,10 +418,10 @@ void GeoAcGlobal_RunInteractive(char* inputs[], int count){
         
         cout << '\n';
         cout << '\t' << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
-        GeoAc_theta = theta*Pi/180.0;
-        GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
+        double GeoAc_theta = theta*Pi/180.0;
+        double GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
         
-        GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0);
+        GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0, GeoAc_theta, GeoAc_phi);
         travel_time_sum = 0.0;
         attenuation = 0.0;
         r_max = 0.0;
@@ -439,7 +440,7 @@ void GeoAcGlobal_RunInteractive(char* inputs[], int count){
                     raypath << solution[m][0] - r_earth;
                     raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                     raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                    if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m));}
+                    if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi));}
                     else{           raypath << '\t' << 0.0;}
                     raypath << '\t' << -attenuation;
                     raypath << '\t' << travel_time_sum;
@@ -473,7 +474,7 @@ void GeoAcGlobal_RunInteractive(char* inputs[], int count){
         if(!BreakCheck){
             cout << '\t' << '\t' << "Ray path arrived at " << solution[k][1]*180.0/Pi << " degrees latitude, " << solution[k][2]*180.0/Pi << " degrees longitude." << '\n';
             cout << '\t' << '\t' << "Arrival range = " << range << " km at azimuth " << bearing << " degrees from N." << '\n';
-            if(CalcAmp) cout << '\t' << '\t' << "Geometric attenuation = " << 20.0*log10(GeoAc_Amplitude(solution,k)) << " dB." << '\n';
+            if(CalcAmp) cout << '\t' << '\t' << "Geometric attenuation = " << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi)) << " dB." << '\n';
             cout << '\t' << '\t' << "Atmospheric attenuation = " << -attenuation << " dB." << '\n';
             cout << '\t' << '\t' << "Arrival celerity = " << range/travel_time_sum << "km/sec." << '\n';
             cout << '\t' << '\t' << "Back azimuth of the arrival = " << back_az  << " degrees from N. " << '\n' << '\n';
@@ -670,7 +671,7 @@ int main(int argc, char* argv[]){
         GeoAcGlobal_RunEigDirect(argv, argc);
         
     } else {
-        cout << "Unrecognized option." << '\n';
+        cout << "Unrecognized option: " << argv[1] << '\n';
     }
     
     

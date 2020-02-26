@@ -73,7 +73,8 @@ struct GeoAc_Sources_Struct GeoAc_Sources = {
 //----------------------------------------------------------------------//
 //-------Fill in solution[0][n] with the appropriate initial values-----//
 //----------------------------------------------------------------------//
-void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, double phi0){
+void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, double phi0,
+                                double GeoAc_theta, double GeoAc_phi){
     GeoAc_Sources.src_loc[0] = r0 + r_earth;
     GeoAc_Sources.src_loc[1] = theta0;
     GeoAc_Sources.src_loc[2] = phi0;    
@@ -607,7 +608,7 @@ double GeoAc_Jacobian(double ** solution, int index){
 }
 
 
-double GeoAc_Amplitude(double ** solution, int index){
+double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta, double GeoAc_phi){
     double r0 = GeoAc_Sources.src_loc[0], theta0 = GeoAc_Sources.src_loc[1], phi0 = GeoAc_Sources.src_loc[2];
 	double r = solution[index][0], theta = solution[index][1], phi = solution[index][2];
 	double nu[3] = {solution[index][3], solution[index][4], solution[index][5]};
