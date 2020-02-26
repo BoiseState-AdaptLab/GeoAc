@@ -74,10 +74,10 @@ double Eval_Spline_ddf(double, struct NaturalCubicSpline_1D &);  // Evaluate d^2
 //-------------Combined Function to Input-------------//
 //------G2S Files and Generate the Interpolation------//
 //----------------------------------------------------//
-extern struct NaturalCubicSpline_1D Temp_Spline;
-extern struct NaturalCubicSpline_1D Windu_Spline;
-extern struct NaturalCubicSpline_1D Windv_Spline;
-extern struct NaturalCubicSpline_1D Density_Spline;
+static struct NaturalCubicSpline_1D Temp_Spline;
+static struct NaturalCubicSpline_1D Windu_Spline;
+static struct NaturalCubicSpline_1D Windv_Spline;
+static struct NaturalCubicSpline_1D Density_Spline;
 
 void Spline_Single_G2S(char*, char*);   // Input the profile prefix and r_vals information to create splines of 2D G2S data
 void ClearAll();                        // Function to clear the G2S arrays and slopes from interpolation

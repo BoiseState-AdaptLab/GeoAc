@@ -299,9 +299,6 @@ double Eval_Spline_ddf(double x, struct NaturalCubicSpline_1D & Spline){
 //-------------Combined Function to Input-------------//
 //------G2S Files and Generate the Interpolation------//
 //----------------------------------------------------//
-struct NaturalCubicSpline_1D Temp_Spline;       struct NaturalCubicSpline_1D Windu_Spline;
-struct NaturalCubicSpline_1D Density_Spline;    struct NaturalCubicSpline_1D Windv_Spline;
-
 void Spline_Single_G2S(char* file_name, char* option){
     SetUp_G2S_Arrays(file_name);
     Load_G2S(file_name, option);
