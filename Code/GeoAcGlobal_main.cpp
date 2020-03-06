@@ -18,7 +18,7 @@
 
 using namespace std;
 
-void GeoAcGlobal_Usage(){
+void GeoAcGlobal_Usage(){ 
     cout << '\n';
     cout << '\t' << "#############################################" << '\n';
     cout << '\t' << "####             GeoAcGlobal             ####" << '\n';
@@ -175,15 +175,13 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     }
     
     // Define variables used for analysis
-	double D, D_prev, travel_time_sum, attenuation, r_max;
-	int k, length = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10));
-	bool BreakCheck;
-	char output_buffer [60];
+    int length = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10));
+    char output_buffer [60];
 	
     // Write the profile to file if neceessary
     if(WriteAtmo) GeoAc_WriteProfile("atmo.dat", 90.0 - phi_min);
        
-	ofstream results;
+    ofstream results;
     ofstream raypath;
     ofstream caustics;
     
@@ -204,7 +202,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     results << '\n';
     
     
-	if(WriteRays){
+    if(WriteRays){
         sprintf(output_buffer, "%s_raypaths.dat", file_title);
         raypath.open(output_buffer);
         
@@ -227,17 +225,26 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             caustics << '\t' << "Lat [deg]";
             caustics << '\t' << "Long [deg]";
             caustics << '\t' << "Travel Time [s]";
-            caustics << '\n';
-            
-            caustics.close();
+            caustics << '\n';            
         }
     }
 
     cout << omp_get_max_threads() << endl;
+
+    // Used to convert degrees to radians
+    const double TO_RAD = Pi/180.0;
+    // Convert longitude and latitude to radians
+    lat_src *= TO_RAD;
+    lon_src *= TO_RAD;
     
     double*** solutions;
     solutions = (double***)malloc(sizeof(double**) * omp_get_max_threads());
-    #pragma omp parallel default(none)
+    // Start parallel, set out variables that can be shared - constants, 
+    // information variables, angle variables, output_variables
+    #pragma omp parallel default(none) shared(cout, r_earth, Pi, \
+     solutions, length, bounces, freq, lat_src, lon_src, z_src, \
+     phi_min, phi_max, phi_step, theta_min, theta_max, theta_step, \
+     WriteRays, WriteCaustics, CalcAmp, results, raypath, caustics)
     {
     int tid = omp_get_thread_num();
     GeoAc_BuildSolutionArray(solutions[tid],length);
@@ -247,23 +254,25 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     for(int phi = phi_min;           phi <= phi_max;     phi+=phi_step){
         for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
             cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
-            double GeoAc_theta = double(theta)*Pi/180.0;
-            double GeoAc_phi = Pi/2.0 - double(phi)*Pi/180.0;
+            double GeoAc_theta = double(theta)*TO_RAD;
+            double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
             
-            GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0, GeoAc_theta, GeoAc_phi);
-            travel_time_sum = 0.0;
-            attenuation = 0.0;
-            r_max = 0.0;
+            GeoAc_SetInitialConditions(solution, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi);
+            double travel_time_sum = 0.0;
+            double attenuation = 0.0;
+            double r_max = 0.0;
             
+            int k;
             for(int bnc_cnt = 0; bnc_cnt <= bounces; bnc_cnt++){
                 
+                // This gets set to false at the beginining of Propogate_RK4()
+                bool BreakCheck;
                 k = GeoAc_Propagate_RK4(solution, BreakCheck);
                 
                 if(WriteRays || WriteCaustics){
-                    if(WriteCaustics){
-                        sprintf(output_buffer, "%s_caustics-path%i.dat", file_title, bnc_cnt);
-                        caustics.open(output_buffer,fstream::app);
-                    
+                    // Used to check for a change in sign from the result of GeoAc_Jacobian()
+                    double D, D_prev;
+                    if(WriteCaustics){                    
                         D_prev = GeoAc_Jacobian(solution,1);
                     }
                     
@@ -274,8 +283,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         
                         if(WriteRays && m % 25 == 0){
                             raypath << solution[m][0] - r_earth;
-                            raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
-                            raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
+                            raypath << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
+                            raypath << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
                             if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
                                                                                           GeoAc_phi));}
                             else{           raypath << '\t' << 0.0;}
@@ -285,8 +294,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         
                         if(WriteCaustics && D*D_prev < 0.0){
                             caustics << solution[m][0] - r_earth;
-                            caustics << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
-                            caustics << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
+                            caustics << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
+                            caustics << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
                             caustics << '\t' << travel_time_sum << '\n';
                         }
                         if(WriteCaustics) D_prev = D;
@@ -300,19 +309,19 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 if(BreakCheck) break;
                 for(int m = 0; m < k ; m++) r_max = max (r_max, solution[m][0] - r_earth);
                 
-                double GC_Dist1 = pow(sin((solution[k][1] - lat_src*Pi/180.0)/2.0),2);
-                double GC_Dist2 = cos(lat_src*Pi/180.0) * cos(solution[k][1]) * pow(sin((solution[k][2] - lon_src*Pi/180.0)/2.0),2);
+                double GC_Dist1 = pow(sin((solution[k][1] - lat_src)/2.0),2);
+                double GC_Dist2 = cos(lat_src) * cos(solution[k][1]) * pow(sin((solution[k][2] - lon_src)/2.0),2);
                 
-                double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + z_src, lat_src*Pi/180.0, lon_src*Pi/180.0) * solution[k][3]) * 180.0 / Pi;
-                double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * 180.0 / Pi;
+                double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + z_src, lat_src, lon_src) * solution[k][3]) * TO_RAD;
+                double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * TO_RAD;
                 if(back_az < -180.0) back_az +=360.0;
                 if(back_az >  180.0) back_az -=360.0;
                 
                 results << theta;
                 results << '\t' << phi;
                 results << '\t' << bnc_cnt;
-                results << '\t' << setprecision(8) << solution[k][1] * 180.0/Pi;
-                results << '\t' << setprecision(8) << solution[k][2] * 180.0/Pi;
+                results << '\t' << setprecision(8) << solution[k][1] * TO_RAD;
+                results << '\t' << setprecision(8) << solution[k][2] * TO_RAD;
                 results << '\t' << travel_time_sum;
                 results << '\t' << 2.0 * r_earth * asin(sqrt(GC_Dist1+GC_Dist2)) / travel_time_sum;
                 results << '\t' << r_max;
@@ -326,6 +335,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 GeoAc_SetReflectionConditions(solution,k);	
             }
             if(WriteRays){raypath << '\n';}
+            // If there were no bounces, then we will clear nothing
             GeoAc_ClearSolutionArray(solution,k);
         }
         results << '\n';
