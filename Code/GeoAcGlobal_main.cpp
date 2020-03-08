@@ -180,52 +180,65 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 	
     // Write the profile to file if neceessary
     if(WriteAtmo) GeoAc_WriteProfile("atmo.dat", 90.0 - phi_min);
-       
-    ofstream results;
-    ofstream raypath;
-    ofstream caustics;
-    
-    sprintf(output_buffer, "%s_results.dat", file_title);
-    results.open(output_buffer);
-    results << "# theta [deg]";
-    results << '\t' << "phi [deg]";
-    results << '\t' << "n_b";
-    results << '\t' << "lat_0 [deg]";
-    results << '\t' << "lon_0 [deg]";
-    results << '\t' << "Travel Time [s]";
-    results << '\t' << "Celerity [km/s]";
-    results << '\t' << "Turning Height [km]";
-    results << '\t' << "Inclination [deg]";
-    results << '\t' << "Back Azimuth [deg]";
-    results << '\t' << "Geo. Atten. [dB]";
-    results << '\t' << "Atmo. Atten. [dB]";
-    results << '\n';
-    
-    
-    if(WriteRays){
-        sprintf(output_buffer, "%s_raypaths.dat", file_title);
-        raypath.open(output_buffer);
-        
-        raypath << "# z [km]";
-        raypath << '\t' << "Lat [deg]";
-        raypath << '\t' << "Long [deg]";
-        raypath << '\t' << "Geo. Atten. [dB]";
-        raypath << '\t' << "Atmo. Atten. [dB]";
-        raypath << '\t' << "Travel Time [s]";
-        raypath << '\n';
-        
+
+    // Get number of threads
+    int num_threads = omp_get_max_threads();
+     
+    // Create arrays of ofstreams, one for each thread  
+    ofstream results[num_threads];
+    ofstream raypaths[num_threads];
+    ofstream caustics[num_threads][bounces + 1];
+
+    for (auto& r:results){
+        sprintf(output_buffer, "%s_results.dat", file_title);
+        r.open(output_buffer);
+        r << "# theta [deg]";
+        r << '\t' << "phi [deg]";
+        r << '\t' << "n_b";
+        r << '\t' << "lat_0 [deg]";
+        r << '\t' << "lon_0 [deg]";
+        r << '\t' << "Travel Time [s]";
+        r << '\t' << "Celerity [km/s]";
+        r << '\t' << "Turning Height [km]";
+        r << '\t' << "Inclination [deg]";
+        r << '\t' << "Back Azimuth [deg]";
+        r << '\t' << "Geo. Atten. [dB]";
+        r << '\t' << "Atmo. Atten. [dB]";
+        r << '\n';
     }
-    if(WriteCaustics){
-        for (int bnc = 0; bnc <= bounces; bnc++){
-            // Clear caustics files
-            sprintf(output_buffer, "%s_caustics-path%i.dat", file_title, bnc);
-            caustics.open(output_buffer);
+        
+    // Go through each raypath stream and write header
+    if(WriteRays){
+        for (auto& rp:raypaths){
+            sprintf(output_buffer, "%s_raypaths.dat", file_title);
+            rp.open(output_buffer);
             
-            caustics << "# z [km]";
-            caustics << '\t' << "Lat [deg]";
-            caustics << '\t' << "Long [deg]";
-            caustics << '\t' << "Travel Time [s]";
-            caustics << '\n';            
+            rp << "# z [km]";
+            rp << '\t' << "Lat [deg]";
+            rp << '\t' << "Long [deg]";
+            rp << '\t' << "Geo. Atten. [dB]";
+            rp << '\t' << "Atmo. Atten. [dB]";
+            rp << '\t' << "Travel Time [s]";
+            rp << '\n';
+        }    
+    }
+    // Go through each caustics stream
+    if(WriteCaustics){
+        for (auto& caustic_arr:caustics){
+            // Go through each bounce and write header
+            int bnc = 0;
+            for (auto& caustic:caustic_arr){
+                // Clear caustics files
+                sprintf(output_buffer, "%s_caustics-path%i.dat", file_title, bnc);
+                caustic.open(output_buffer);
+                
+                caustic << "# z [km]";
+                caustic << '\t' << "Lat [deg]";
+                caustic << '\t' << "Long [deg]";
+                caustic << '\t' << "Travel Time [s]";
+                caustic << '\n';
+                bnc++;
+            }
         }
     }
 
@@ -239,20 +252,27 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     
     double*** solutions;
     solutions = (double***)malloc(sizeof(double**) * omp_get_max_threads());
+
+    cout << "Got to for loop" << endl;
     // Start parallel, set out variables that can be shared - constants, 
     // information variables, angle variables, output_variables
-    #pragma omp parallel default(none) shared(cout, r_earth, Pi, \
+    #pragma omp parallel default(none) shared(cout, cerr, r_earth, Pi, \
      solutions, length, bounces, freq, lat_src, lon_src, z_src, \
      phi_min, phi_max, phi_step, theta_min, theta_max, theta_step, \
-     WriteRays, WriteCaustics, CalcAmp, results, raypath, caustics)
+     WriteRays, WriteCaustics, CalcAmp, results, raypaths, caustics)
     {
     int tid = omp_get_thread_num();
     GeoAc_BuildSolutionArray(solutions[tid],length);
     double** solution = solutions[tid];
 
+    cerr << "Opened thread " << tid << endl;
+
     
-    for(int phi = phi_min;           phi <= phi_max;     phi+=phi_step){
+    for(int phi = phi_min; phi <= phi_max; phi+=phi_step){
+        cerr << "in phi for loop " << tid << endl;
         for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
+            
+            cerr << "in theta for loop " << tid << endl;
             cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
             double GeoAc_theta = double(theta)*TO_RAD;
             double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
@@ -264,6 +284,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             
             int k;
             for(int bnc_cnt = 0; bnc_cnt <= bounces; bnc_cnt++){
+                cerr << "in bounce for loop " << tid << endl;
                 
                 // This gets set to false at the beginining of Propogate_RK4()
                 bool BreakCheck;
@@ -277,30 +298,30 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                     }
                     
                     for(int m = 1; m < k ; m++){     // write profiles to data files and vector arrays
+                        cerr << "in k for loop " << tid << " " << k << endl;
                         if(WriteCaustics) D = GeoAc_Jacobian(solution,m);
                         GeoAc_TravelTimeSegment(travel_time_sum, solution, m-1,m);
                         GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq);
                         
                         if(WriteRays && m % 25 == 0){
-                            raypath << solution[m][0] - r_earth;
-                            raypath << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
-                            raypath << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
-                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
+                            raypaths[tid] << solution[m][0] - r_earth;
+                            raypaths[tid] << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
+                            raypaths[tid] << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
+                            if(CalcAmp){    raypaths[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
                                                                                           GeoAc_phi));}
-                            else{           raypath << '\t' << 0.0;}
-                            raypath << '\t' << -attenuation;
-                            raypath << '\t' << travel_time_sum << '\n';
+                            else{           raypaths[tid] << '\t' << 0.0;}
+                            raypaths[tid] << '\t' << -attenuation;
+                            raypaths[tid] << '\t' << travel_time_sum << '\n';
                         }
                         
                         if(WriteCaustics && D*D_prev < 0.0){
-                            caustics << solution[m][0] - r_earth;
-                            caustics << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
-                            caustics << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
-                            caustics << '\t' << travel_time_sum << '\n';
+                            caustics[tid][bnc_cnt] << solution[m][0] - r_earth;
+                            caustics[tid][bnc_cnt] << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
+                            caustics[tid][bnc_cnt] << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
+                            caustics[tid][bnc_cnt] << '\t' << travel_time_sum << '\n';
                         }
                         if(WriteCaustics) D_prev = D;
                     }
-                    if(WriteCaustics) caustics.close();
                 } else {
                     travel_time_sum+= GeoAc_TravelTime(solution, k);
                     attenuation+= GeoAc_SB_Atten(solution,k,freq);
@@ -317,35 +338,38 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 if(back_az < -180.0) back_az +=360.0;
                 if(back_az >  180.0) back_az -=360.0;
                 
-                results << theta;
-                results << '\t' << phi;
-                results << '\t' << bnc_cnt;
-                results << '\t' << setprecision(8) << solution[k][1] * TO_RAD;
-                results << '\t' << setprecision(8) << solution[k][2] * TO_RAD;
-                results << '\t' << travel_time_sum;
-                results << '\t' << 2.0 * r_earth * asin(sqrt(GC_Dist1+GC_Dist2)) / travel_time_sum;
-                results << '\t' << r_max;
-                results << '\t' << inclination;
-                results << '\t' << back_az;
-                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi));}
-                else{           results << '\t' << 0.0;}
-                results << '\t' << -attenuation;
-                results << '\n';
+                results[tid] << theta;
+                results[tid] << '\t' << phi;
+                results[tid] << '\t' << bnc_cnt;
+                results[tid] << '\t' << setprecision(8) << solution[k][1] * TO_RAD;
+                results[tid] << '\t' << setprecision(8) << solution[k][2] * TO_RAD;
+                results[tid] << '\t' << travel_time_sum;
+                results[tid] << '\t' << 2.0 * r_earth * asin(sqrt(GC_Dist1+GC_Dist2)) / travel_time_sum;
+                results[tid] << '\t' << r_max;
+                results[tid] << '\t' << inclination;
+                results[tid] << '\t' << back_az;
+                if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi));}
+                else{           results[tid] << '\t' << 0.0;}
+                results[tid] << '\t' << -attenuation;
+                results[tid] << '\n';
                 
                 GeoAc_SetReflectionConditions(solution,k);	
             }
-            if(WriteRays){raypath << '\n';}
+            if(WriteRays){raypaths[tid] << '\n';}
             // If there were no bounces, then we will clear nothing
             GeoAc_ClearSolutionArray(solution,k);
         }
-        results << '\n';
-    }	
-	raypath.close();
-	results.close();
-	caustics.close();
-	GeoAc_DeleteSolutionArray(solution, length);
-
+        results[tid] << '\n';
     }
+    // Close files for this specific thread
+    raypaths[tid].close();
+    results[tid].close();
+    // Close the caustics files for each bounce
+    for (int i = 0; i < bounces; i++){
+       caustics[tid][i].close();
+    }
+    GeoAc_DeleteSolutionArray(solution, length);
+    }// End omp parallelization
 }
 
 void GeoAcGlobal_RunInteractive(char* inputs[], int count){
