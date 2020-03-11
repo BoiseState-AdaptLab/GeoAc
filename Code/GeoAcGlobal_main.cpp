@@ -280,9 +280,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
       const int max_val = phi_max;
       const int step = phi_step;
-      #pragma omp for schedule(guided)
+      #pragma omp for
       for(int phi = phi_min; phi <= max_val; phi+=step){
           cerr << "in phi for loop " << phi << tid << endl;
+          cerr << &sources << endl;
           for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
             
               cerr << "in theta for loop " << tid << endl;

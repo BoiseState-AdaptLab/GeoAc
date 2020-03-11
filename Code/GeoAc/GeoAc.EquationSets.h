@@ -25,7 +25,7 @@ struct GeoAc_Sources_Struct{
     double ddu[3][2] = {0};     // ddu_rlt, ddu_rlp; ddu_tlt, ddu_tlp; ddu_plt, ddu_plp
 
     double nu0 = 0;         // Eikonal vector magnitude at the source
-    double nu_mag = {0};                // Eikonal vector magnitude
+    double nu_mag = 0;                // Eikonal vector magnitude
     double dnu_mag[2] = {0};    // Derivative of |nu| with respect to lt, lp
 
     double c_gr[3] = {0};         // Group velocity cg = c {nu_x,nu_y,nu_z}/|nu} + {u,v,w}
@@ -39,6 +39,23 @@ struct GeoAc_Sources_Struct{
     double GeoTerms[3] = {0};         // Extra terms which keep the eikonal vector direction constant as the unit vectors vary with position
     double d_GeoTerms[3][2] = {0};    // Angular derivatives of the extra terms keeping the eikonal vector direction constant
 };
+
+#define PRINTSTRUCT (s) cout << "Src_loc: "; for (int i = 0; i < 3; i++) {cout << s.src_loc[i] << " ";} cout << endl; \
+cout << "c0: " << s.c0 << endl << "c: " << s.c << endl << "w: " << s.w << endl << "v: " << s.v << endl << "u: " << s.u << endl; \
+cout << "dc: dw: dv: du:" << endl; \
+for (int i = 0; i < 5; i++){cout << s.dc[i] << " " << s.dw[i] << " " << s.dv[i] << " " << s.du[i] << endl;} \
+cout << "ddc: ddw: ddv: ddu:" << endl\
+for (int i = 0; i < 3; i++){cout << "New row: " << i << endl; \
+for (int j = 0; j < 2; j++){cout << s.dc[i][j] << " " << s.dw[i][j] << " " << s.dv[i][j] << " " << s.du[i][j] << endl;}} \
+cout << "nu0: " << s.nu << " nu_mag: " << s.nu_mag << endl << "dnu_mag: "; \
+for (int j = 0; j < 2; j++){cout << s.dnu_mag[j] << " ";} cout << endl; \
+cout << "c_gr_mag: " << s.c_gr_mag << endl << "c_gr: "; \
+for (int i = 0; i < 3; i++){cout << s.c_gr[j] << " ";} cout << endl; \
+cout << "dc_gr_mag "; for (int i = 0; i < 2; i++){cout << s.dc_gr_mag[i] << " ";} cout << endl; \
+cout << "dc_gr: "; for (int i = 0; i < 3; i++){for (int j = 0; j < 2; j++){cout << s.dc_gr[i][j] << " ";} cout << endl;} cout << endl; \
+cout << "GeoCoeff: GeoTerms:" << endl; for (int i = 0; i < 3; i++){cout << s.GeoCoef[i] << " " << s.GeoTerms[i] << endl;} \
+cout << "d_GeoCoeff: d_GeoTerms:" << endl; for (int i = 0; i < 3; i++){cout << "New Row: " << i << endl; \
+for (int j = 0; j < 2; j++){cout << s.d_GeoCoeff[i][j] << " " << s.d_GeoTerms[i][j] << endl;}}
 
 void    GeoAc_SetSystem();                                              // Function to set dimensions and stratified
 
