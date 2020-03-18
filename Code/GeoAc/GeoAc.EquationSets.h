@@ -40,20 +40,22 @@ struct GeoAc_Sources_Struct{
     double d_GeoTerms[3][2] = {0};    // Angular derivatives of the extra terms keeping the eikonal vector direction constant
 };
 
-#define PRINTSTRUCT (s) cout << "Src_loc: "; for (int i = 0; i < 3; i++) {cout << s.src_loc[i] << " ";} cout << endl; \
+#define PRINTSTRUCT(s) cout << "Src_loc: "; \
+for (int i = 0; i < 3; i++) {cout << s.src_loc[i] << " ";} \
+cout << endl; \
 cout << "c0: " << s.c0 << endl << "c: " << s.c << endl << "w: " << s.w << endl << "v: " << s.v << endl << "u: " << s.u << endl; \
 cout << "dc: dw: dv: du:" << endl; \
 for (int i = 0; i < 5; i++){cout << s.dc[i] << " " << s.dw[i] << " " << s.dv[i] << " " << s.du[i] << endl;} \
-cout << "ddc: ddw: ddv: ddu:" << endl\
+cout << "ddc: ddw: ddv: ddu:" << endl; \
 for (int i = 0; i < 3; i++){cout << "New row: " << i << endl; \
-for (int j = 0; j < 2; j++){cout << s.dc[i][j] << " " << s.dw[i][j] << " " << s.dv[i][j] << " " << s.du[i][j] << endl;}} \
-cout << "nu0: " << s.nu << " nu_mag: " << s.nu_mag << endl << "dnu_mag: "; \
+for (int j = 0; j < 2; j++){cout << s.ddc[i][j] << " " << s.ddw[i][j] << " " << s.ddv[i][j] << " " << s.ddu[i][j] << endl;}} \
+cout << "nu0: " << s.nu0 << " nu_mag: " << s.nu_mag << endl << "dnu_mag: "; \
 for (int j = 0; j < 2; j++){cout << s.dnu_mag[j] << " ";} cout << endl; \
 cout << "c_gr_mag: " << s.c_gr_mag << endl << "c_gr: "; \
-for (int i = 0; i < 3; i++){cout << s.c_gr[j] << " ";} cout << endl; \
+for (int i = 0; i < 3; i++){cout << s.c_gr[i] << " ";} cout << endl; \
 cout << "dc_gr_mag "; for (int i = 0; i < 2; i++){cout << s.dc_gr_mag[i] << " ";} cout << endl; \
 cout << "dc_gr: "; for (int i = 0; i < 3; i++){for (int j = 0; j < 2; j++){cout << s.dc_gr[i][j] << " ";} cout << endl;} cout << endl; \
-cout << "GeoCoeff: GeoTerms:" << endl; for (int i = 0; i < 3; i++){cout << s.GeoCoef[i] << " " << s.GeoTerms[i] << endl;} \
+cout << "GeoCoeff: GeoTerms:" << endl; for (int i = 0; i < 3; i++){cout << s.GeoCoeff[i] << " " << s.GeoTerms[i] << endl;} \
 cout << "d_GeoCoeff: d_GeoTerms:" << endl; for (int i = 0; i < 3; i++){cout << "New Row: " << i << endl; \
 for (int j = 0; j < 2; j++){cout << s.d_GeoCoeff[i][j] << " " << s.d_GeoTerms[i][j] << endl;}}
 
@@ -64,7 +66,7 @@ void    GeoAc_SetInitialConditions(double**&, double, double);          // Funct
 void    GeoAc_SetInitialConditions(double**&, double, double, double,   // Function sets initial conditions for a source at (r_0, z_0) with launch angles
                                    double);                             // GeoAc_ theta, GeoAc_phi
 void GeoAc_SetInitialConditions(double**&, double, double,double,double,// Function sets initial conditions for a source at (x_0, y_0, z_0) with launch angles 
-                                   double, GeoAc_Sources_Struct&);      // GeoAc_theta, GeoAc_phi
+                                   double, GeoAc_Sources_Struct&); // GeoAc_theta, GeoAc_phi
 
 void    GeoAc_ApproximateIntercept(double**, int, double*&);            // Function uses linear interpolation to estimate ground intercept values
 void    GeoAc_SetReflectionConditions(double**&, int,                   // Function sets reflection conditions

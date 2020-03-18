@@ -6,6 +6,7 @@
 
 #include "GeoAc.Parameters.h"
 #include "Atmo_State.h"
+#include "../Atmo/G2S_GlobalSpline1D.h"
 #include "GeoAc.EquationSets.h"
 
 using namespace std;
@@ -221,16 +222,19 @@ double GeoAc_Set_ds(double* current_values){
 //---------------------------------------//
 //-------Update the source functions-----//
 //---------------------------------------//
-void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Sources_Struct &sources){
+void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Sources_Struct &sources, SplineStruct &splines_struct){
     // Extract ray location and eikonal vector components
     double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
 	double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
     
 	// Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
-    sources.c = c(r,theta,phi);
+    cout << "C function" << endl;
+    cout << "inputs: r = " << r << ", theta = " << theta << ", phi = " << phi << endl;
+    sources.c = c(r,theta,phi,splines_struct.Temp_Spline);
+    cout << "output: sources.c = " << sources.c << endl;
     sources.w = w(r,theta,phi);
-    sources.v = v(r,theta,phi);
-    sources.u = u(r,theta,phi);
+    sources.v = v(r,theta,phi,splines_struct.Windv_Spline);
+    sources.u = u(r,theta,phi, splines_struct.Windu_Spline);
     
     sources.dc[0] = c_diff(r,theta,phi,0);
     sources.dw[0] = w_diff(r,theta,phi,0);
@@ -256,10 +260,10 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     
     sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2));
 
-        for (int i = 0; i < 3; i++){
+/*        for (int i = 0; i < 3; i++){
             cout << sources.c_gr[i] << " " << nu[i] << " ";
         }
-        cout << endl << endl;
+        cout << endl << endl;*/
     
     // Update geometric coefficients
     sources.GeoCoeff[0] = 1.0;
@@ -393,10 +397,10 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
         case(1):    // d theta / d s
         case(2):    // d phi / d s
 			result = sources.GeoCoeff[Eq_Number]*sources.c_gr[Eq_Number]/sources.c_gr_mag;
-                        if (isnan(result)){
+/*                        if (isnan(result)){
                             cout << "2: " << sources.GeoCoeff[n] << " " << sources.c_gr[n] << " ";
                             cout << sources.c_gr_mag << endl;
-                        }
+                        }*/
 			break;
             
 		case(3): 	// d nu_r /ds
@@ -404,11 +408,11 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
 		case(5): 	// d nu_phi / ds
 			result = -sources.GeoCoeff[Eq_Number-3]/sources.c_gr_mag*(sources.nu_mag*sources.dc[Eq_Number-3]
                         + nu[0]*sources.dw[Eq_Number-3] + nu[1]*sources.dv[Eq_Number-3] + nu[2]*sources.du[Eq_Number-3] + sources.GeoTerms[Eq_Number-3]);
-                        if (isnan(result)){
+/*                        if (isnan(result)){
                             cout << "5: " << sources.GeoCoeff[n-3] << " " << sources.c_gr_mag << " ";
                             cout << sources.nu_mag << " " << sources.dv[n] << " " << sources.dw[n-3] << " ";
                             cout << sources.du[n-3] << " " << sources.GeoTerms[n-3] << " " << nu[0] << " " << nu[1] << " " << nu[2] << endl;
-                        }
+                        }*/
 			break;
             
             
@@ -418,10 +422,10 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
 			result = sources.d_GeoCoeff[Eq_Number-6][0]*sources.c_gr[Eq_Number-6]/sources.c_gr_mag
                          + sources.GeoCoeff[Eq_Number-6]*sources.dc_gr[Eq_Number-6][0]/sources.c_gr_mag
                             - sources.GeoCoeff[Eq_Number-6]*sources.c_gr[Eq_Number-6]/pow(sources.c_gr_mag,2) * sources.dc_gr_mag[0];
-                        if (isnan(result)){
+/*                        if (isnan(result)){
                             cout << "8: " << sources.d_GeoCoeff[n-6][0] << " " << sources.c_gr_mag << " ";
                             cout << sources.c_gr[n-6] << " " << sources.dc_gr[n-6][0] << " " << sources.dc_gr_mag[0] << endl;
-                        }
+                        }*/
 			break;
             
             
@@ -435,14 +439,14 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
                     - sources.GeoCoeff[Eq_Number-9]/sources.c_gr_mag*(sources.dnu_mag[0]*sources.dc[Eq_Number-9] + sources.nu_mag*sources.ddc[Eq_Number-9][0]
                             + mu_lt[0]*sources.dw[Eq_Number-9] + mu_lt[1]*sources.dv[Eq_Number-9] + mu_lt[2]*sources.du[Eq_Number-9]
                                 + nu[0]*sources.ddw[Eq_Number-9][0] + nu[1]*sources.ddv[Eq_Number-9][0] + nu[2]*sources.ddu[Eq_Number-9][0] + sources.d_GeoTerms[Eq_Number-9][0]);
-                        if (isnan(result)){
+/*                        if (isnan(result)){
                             cout << "11: " << sources.d_GeoCoeff[n-9][0] << " " << sources.c_gr_mag << " ";
                             cout << sources.nu_mag << " " << sources.dc[n-9] << " " << sources.dw[n-9] << " " << sources.dv[n-9] << " ";
                             cout << sources.du[n-9] << " " << sources.GeoTerms[n-3] << " " << nu[0] << " " << nu[1] << " " << nu[2] << " ";
                             cout << sources.dnu_mag[0] << " " << sources.ddc[n-9][0] << " " << sources.ddw[n-9][0] << " ";
                             cout << sources.ddv[n-9][0] << " " << sources.ddu[n-9][0] << " " << mu_lt[0] << " " << mu_lt[1] << " ";
                             cout << mu_lt[2] << " " << nu[0] << " " << nu[1] << " " << nu[2] << " " << sources.d_GeoTerms[n-9][0] << endl;
-                        }
+                        }*/
 			break;
             
             
@@ -452,10 +456,10 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
 			result = sources.d_GeoCoeff[Eq_Number-12][1]*sources.c_gr[Eq_Number-12]/sources.c_gr_mag
                         + sources.GeoCoeff[Eq_Number-12]*sources.dc_gr[Eq_Number-12][1]/sources.c_gr_mag
                             - sources.GeoCoeff[Eq_Number-12]*sources.c_gr[Eq_Number-12]/pow(sources.c_gr_mag,2) * sources.dc_gr_mag[1];
-                        if (isnan(result)){
+/*                        if (isnan(result)){
                             cout << "14: " << sources.d_GeoCoeff[n-12][1] << " " << sources.c_gr_mag << " " << sources.c_gr[n-12] << " ";
                             cout << sources.dc_gr[n-12][1] << " " << sources.GeoCoeff[n-12] << " " << sources.dc_gr_mag[1] << endl;
-                        }
+                        }*/
 			break;
             
 		case(15): 	// d mu_r_lp/ds
@@ -468,18 +472,17 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
                     - sources.GeoCoeff[Eq_Number-15]/sources.c_gr_mag*(sources.dnu_mag[1]*sources.dc[Eq_Number-15] + sources.nu_mag*sources.ddc[Eq_Number-15][1]
                         + mu_lp[0]*sources.dw[Eq_Number-15] + mu_lp[1]*sources.dv[Eq_Number-15] + mu_lp[2]*sources.du[Eq_Number-15]
                             + nu[0]*sources.ddw[Eq_Number-15][1] + nu[1]*sources.ddv[Eq_Number-15][1] + nu[2]*sources.ddu[Eq_Number-15][1] + sources.d_GeoTerms[Eq_Number-15][1]);
-		        if (isnan(result)){
+/*		        if (isnan(result)){
                             cout << "17: " << sources.d_GeoCoeff[n-15][1] << " " << sources.c_gr_mag << " ";
                             cout << sources.nu_mag << " " << sources.dc[n-15] << " " << sources.dw[n-15] << " " << sources.dv[n-15] << " ";
                             cout << sources.du[n-15] << " " << sources.GeoCoeff[n-15] << " ";
                             cout << sources.dnu_mag[1] << " " << sources.ddc[n-15][1] << " " << sources.ddw[n-15][1] << " ";
                             cout << sources.ddv[n-15][1] << " " << sources.ddu[n-15][1] << " " << mu_lt[0] << " " << mu_lt[1] << " ";
                             cout << mu_lt[2] << " " << nu[0] << " " << nu[1] << " " << nu[2] << " " << sources.d_GeoTerms[n-15][1] << endl;
-                        }
+                        }*/
                        break;
             
 	}
-        if (isnan(result)){exit(EXIT_FAILURE);}
 	return result;
 }
 

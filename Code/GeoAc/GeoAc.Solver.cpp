@@ -3,6 +3,7 @@
 
 #include <math.h>
 #include <iostream>
+#include <omp.h>
 
 #include "GeoAc.Parameters.h"
 #include "Atmo_State.h"
@@ -24,6 +25,8 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
  
 	check = false;
      	for(k = 0; k < (step_limit - 1); k++){
+                //cout << "Printing sources struct. Thread id: " << omp_get_thread_num() << endl;
+                //PRINTSTRUCT(sources);
        		for (int i = 0; i < GeoAc_EqCnt; i++){
 			temp0[i] = solution[k][i];
 		}
@@ -53,27 +56,32 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
 		for (int i = 0; i < GeoAc_EqCnt; i++){
 			temp4[i] = ds*GeoAc_EvalSrcEq(s+ds, partial3, i, sources);
 			solution[k+1][i] = solution[k][i] + temp1[i]/6.0 + temp2[i]/3.0 + temp3[i]/3.0 + temp4[i]/6.0;
-                        if (isnan(solution[k+1][i]) & !isnan(solution[k][i])){
+/*                        if (isnan(solution[k+1][i]) & !isnan(solution[k][i])){
                             cout << k << ", " << i << ": ";
                             cout << temp1[i] << " " << temp2[i] << " " << temp3[i] << " " << temp4[i] << endl;
                             cout << sources.c_gr_mag << " " << solution[k][i] << " -> " << solution[k+1][i] << endl;
-                        }
+                        }*/
 		}
 
-                if (k == 8786){
+/*                if (k == 8786){
                     for (int i = 0; i < GeoAc_EqCnt; i++){
                         cout << solution[k+1][i] << " ";
                     }
                     cout << endl;
+                }*/
+
+                if (k == 8786){
+                    cout << "Should break here, printing struct" << endl;
+                    PRINTSTRUCT(sources);
                 }
 
 		if(GeoAc_BreakCheck(solution,k+1, sources)){
-                        cerr << "Break Check " << k << endl;
+                        cout << "Break Check " << k << endl;
 			check = true;
 			break;
 		}
 		if(GeoAc_GroundCheck(solution,k+1)){
-                        cerr << "Ground Check " << k << endl;
+                        cout << "Ground Check " << k << endl;
 			check = false;
 			break;
 		}

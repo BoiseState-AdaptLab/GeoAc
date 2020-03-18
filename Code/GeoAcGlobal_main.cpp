@@ -124,7 +124,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     tweak_abs=0.3;
     
     for(int i = 3; i < count; i++) if (strncmp(inputs[i], "profile_format=",15) == 0){ ProfileFormat = inputs[i]+15;}
-    Spline_Single_G2S(inputs[2],ProfileFormat); // Load profile into spline
+    // Create and load a new SplineStruct (see Code/Atmo/G2S_GlobalSpine1D.h)
+    // Each thread will get its own copy
+    SplineStruct splines;
+    Spline_Single_G2S(inputs[2],ProfileFormat, splines); // Load profile into spline
     
     for(int i = 3; i < count; i++){
         if (strncmp(inputs[i], "theta_min=",10) == 0){              theta_min = atof(inputs[i]+10);}
@@ -257,7 +260,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     #pragma omp parallel default(none) shared(cout, cerr, r_earth, Pi, \
      solutions, length, bounces, freq, lat_src, lon_src, z_src, \
      phi_min, phi_max, phi_step, theta_min, theta_max, theta_step, \
-     WriteRays, WriteCaustics, CalcAmp, results, raypaths, caustics) private(k)
+     WriteRays, WriteCaustics, CalcAmp, results, raypaths, caustics) \
+     private(k, splines)
     {
       int tid = omp_get_thread_num();
       GeoAc_BuildSolutionArray(solutions[tid],length);
@@ -266,6 +270,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       cerr << "Opened thread " << tid << endl;
 
       //struct GeoAc_Sources_Struct sources;
+      // Each thread gets its own struct (see Code/GeoAc/GeoAc.EquationSets.h)
       struct GeoAc_Sources_Struct sources = {
         {0.0, 0.0, 0.0}, 0.0,
         0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
@@ -292,6 +297,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
             
               GeoAc_SetInitialConditions(solution, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources);
+
+              //cout << "\nPrinting sources struct. Thread id: " << tid << endl;
+              //PRINTSTRUCT(sources);
+
               double travel_time_sum = 0.0;
               double attenuation = 0.0;
               double r_max = 0.0;

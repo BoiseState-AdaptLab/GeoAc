@@ -1,0 +1,49 @@
+Atmo/Atmo_State.Absorption.Global.cpp:    T_o   = pow(c(z_grnd,theta,phi)*1000.0,2)/(R*gam);                              // Reference temperature [K]
+Atmo/Atmo_State.Absorption.Global.cpp:    P_o   = rho(z_grnd,theta,phi)*pow(c(z_grnd, theta, phi)*1000.0,2)/gam*1000.0;   // Reference pressure [Pa]
+Atmo/Atmo_State.Absorption.Global.cpp:    T_z     = pow(c(r,theta,phi)*1000.0,2)/(R*gam);                         // Temperature at location [K]
+Atmo/Atmo_State.Absorption.Global.cpp:    P_z     = rho(r,theta,phi)*pow(c(r,theta,phi)*1000.0,2)/gam * 1000.0;   // Pressure at location [Pa]
+Atmo/Atmo_State.Absorption.Global.cpp:    c_snd_z = c(r,theta,phi);                                               // Sound speed at location [km/s]
+Atmo/Atmo_State.GlobalSpline_Input.cpp:double c(double r, double theta, double phi) {
+Atmo/G2S_GlobalSpline1D.cpp:double gamR = 0.00040187; // gamma * R in km^2/s^2 * 1/K, c(x,y,z) = sqrt(gamma*r*T(x,y,z))
+Atmo/G2S_GlobalSpline1D.cpp:double c(double r, double theta, double phi, NaturalCubicSpline_1D &Temp_Spline){
+Atmo/G2S_GlobalSpline1D.cpp:    if(n==0){   return gamR / (2.0 * c(r,theta,phi, Temp_Spline)) * Eval_Spline_df(r_eval,Temp_Spline);}
+Atmo/G2S_GlobalSpline1D.cpp:    double SndSpd = c(r, theta, phi, TempSpline);
+Atmo/Atmo_State.h:double c(double, double, double, NaturalCubicSpline_1D&);// Thermodynamic sound speed and derivatives
+GeoAc/Atmo_State.h:double c(double, double, double);                       // Thermodynamic sound speed and derivatives
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << pow(c(r0,Pi/4.0, 0)*1000.0,2)/(R*gam) << '\t';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << rho(r0, Pi/4.0, 0) * pow(c(r0,Pi/4.0, 0) * 1000.0, 2) / gam * 10.0 << '\t';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << c(r0,Pi/4.0,0) << '\t';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << c(r0,Pi/4.0,0) + cos((azimuth)*Pi/180.0)*u(r0,Pi/4.0,0) + sin((azimuth)*Pi/180.0)*v(r0,Pi/4.0,0) << '\n';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << pow(c(r0,lat_src, lon_src)*1000.0,2)/(R*gam) << '\t';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << rho(r0,lat_src,lon_src)*pow(c(r0,lat_src, lon_src) * 1000.0, 2) / gam * 10.0 << '\t';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << c(r0,lat_src,lon_src) << '\t';
+GeoAc/GeoAc.Interface.Global.cpp:            file_out << c(r0,lat_src,lon_src) + cos((azimuth)*Pi/180.0)*u(r0,lat_src,lon_src) + sin((azimuth)*Pi/180.0)*v(r0,lat_src,lon_src) << '\n';
+GeoAc/GeoAc.Eigenray.cpp:        M_Comps[0] = u(Source_Loc[0], Source_Loc[1], Source_Loc[2]) / c(Source_Loc[0], Source_Loc[1], Source_Loc[2]);
+GeoAc/GeoAc.Eigenray.cpp:        M_Comps[1] = v(Source_Loc[0], Source_Loc[1], Source_Loc[2]) / c(Source_Loc[0], Source_Loc[1], Source_Loc[2]);
+GeoAc/GeoAc.Eigenray.cpp:        M_Comps[2] = w(Source_Loc[0], Source_Loc[1], Source_Loc[2]) / c(Source_Loc[0], Source_Loc[1], Source_Loc[2]);
+GeoAc/GeoAc.Eigenray.cpp:                arrival_incl = - asin(c(solution[k][0], solution[k][1], z_grnd) / c(Source_Loc[0], Source_Loc[1], Source_Loc[2]) * solution[k][3]) * 180.0 / Pi;
+GeoAc/GeoAc.Eigenray.cpp:                arrival_incl = - asin(c(solution[k][0], solution[k][1], z_grnd) / c(Source_Loc[0], Source_Loc[1], Source_Loc[2]) * solution[k][5]) * 180.0 / Pi;
+GeoAc/GeoAc.Eigenray.Global.cpp:            arrival_incl = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + Source_Loc[2], Source_Loc[0] * Pi / 180.0, Source_Loc[1] * Pi / 180.0) * solution[k][3]) * 180.0 / Pi;
+GeoAc/GeoAc.EquationSets.Global.cpp:    sources.c0 = c(r0 + r_earth, theta0, phi0);
+GeoAc/GeoAc.EquationSets.Global.cpp:    double c_ref = c(prev[0], prev[1], prev[2]);
+GeoAc/GeoAc.EquationSets.Global.cpp:    sources.c = c(r,theta,phi);
+GeoAc/GeoAc.EquationSets.Global.cpp:	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c0/c(r,theta,phi)
+GeoAc/GeoAc.EquationSets.Global.cpp:                + (w(r,theta,phi)*nu[0] + v(r,theta,phi)*nu[1] + u(r,theta,phi)*nu[2])/c(r, theta, phi);
+GeoAc/GeoAc.EquationSets.Global.cpp:	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c(r0,theta0,phi0)/c(r,theta,phi) + (w(r,theta,phi)*nu[0] + v(r,theta,phi)*nu[1] + u(r,theta,phi)*nu[2])/c(r, theta, phi);
+GeoAc/GeoAc.EquationSets.Global.cpp:    double Resid_lt = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/mag_nu + mag_nu/c(r,theta,phi) * dc_dlt
+GeoAc/GeoAc.EquationSets.Global.cpp:                        + 1.0/c(r,theta,phi) * (mu_lt[0]*w(r,theta,phi) + mu_lt[1]*v(r,theta,phi) + mu_lt[2]*u(r,theta,phi) + nu[0]*dw_dlt + nu[1]*dv_dlt + nu[2]*du_dlt);
+GeoAc/GeoAc.EquationSets.Global.cpp:    double Resid_lp = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/mag_nu + mag_nu/c(r,theta,phi) * dc_dlp
+GeoAc/GeoAc.EquationSets.Global.cpp:                        + 1.0/c(r,theta,phi) * (mu_lp[0]*w(r,theta,phi) + mu_lp[1]*v(r,theta,phi) + mu_lp[2]*u(r,theta,phi) + nu[0]*dw_dlp + nu[1]*dv_dlp + nu[2]*du_dlp);
+GeoAc/GeoAc.EquationSets.Global.cpp:		c_prop[0] = c(r,t,p)*nu[0]/nu_mag + w(r,t,p);
+GeoAc/GeoAc.EquationSets.Global.cpp:		c_prop[1] = c(r,t,p)*nu[1]/nu_mag + v(r,t,p);
+GeoAc/GeoAc.EquationSets.Global.cpp:		c_prop[2] = c(r,t,p)*nu[2]/nu_mag + u(r,t,p);
+GeoAc/GeoAc.EquationSets.Global.cpp:		c_prop[0] = c(r,t,p) * nu[0]/nu_mag + w(r,t,p);
+GeoAc/GeoAc.EquationSets.Global.cpp:		c_prop[1] = c(r,t,p) * nu[1]/nu_mag + v(r,t,p);
+GeoAc/GeoAc.EquationSets.Global.cpp:		c_prop[2] = c(r,t,p) * nu[2]/nu_mag + u(r,t,p);
+GeoAc/GeoAc.EquationSets.Global.cpp:	double c_prop[3] = 	{c(r,theta,phi)*nu[0]/nu_mag + w(r,theta,phi), 	c(r,theta,phi)*nu[1]/nu_mag + v(r,theta,phi), 	c(r,theta,phi)*nu[2]/nu_mag + u(r,theta,phi)};
+GeoAc/GeoAc.EquationSets.Global.cpp:    double  nu_mag = (sources.c0 - nu[0]*w(r,theta,phi) - nu[1]*v(r,theta,phi) - nu[2]*u(r,theta,phi))/c(r,theta,phi),
+GeoAc/GeoAc.EquationSets.Global.cpp:            c_prop[3] =  {c(r,theta,phi)*nu[0]/nu_mag + w(r,theta,phi),	c(r,theta,phi)*nu[1]/nu_mag + v(r,theta,phi), c(r,theta,phi)*nu[2]/nu_mag + u(r, theta, phi)},
+GeoAc/GeoAc.EquationSets.Global.cpp:	double Amp_Num = rho(r,theta,phi) *  nu_mag * pow(c(r,theta,phi),3)  *  c_prop_mag0 * cos(GeoAc_theta);
+GeoAc/GeoAc.EquationSets.Global.cpp:	double Amp_Den = rho(r0,theta0,phi0)*nu_mag0* pow(c(r0,theta0,phi0),3)* c_prop_mag  * D;
+GeoAcGlobal_main.cpp:    solutions = (double***)malloc(sizeof(double**) * num_threads);
+GeoAcGlobal_main.cpp:                  double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + z_src, lat_src, lon_src) * solution[k][3]) * TO_RAD;
