@@ -33,7 +33,7 @@ double w(double, double, double);                       // \hat{Z} component of 
 double w_diff(double, double, double, int);
 double w_ddiff(double, double, double, int, int);
 
-double SuthBass_Alpha(double, double, double, double);  // Attenuation model from Sutherland Bass
+double SuthBass_Alpha(double, double, double, double, SplineStruct&);  // Attenuation model from Sutherland Bass
 double Atten_Other(double, double, double, double);     // Any other attenuation model
 
 #endif  /*ATMO_STATE_H_*/

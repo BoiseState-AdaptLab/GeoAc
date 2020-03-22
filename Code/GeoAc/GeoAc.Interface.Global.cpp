@@ -9,7 +9,8 @@
 #include <sstream>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
+#include "../Atmo/G2S_GlobalSpline1D.h"
 #include "GeoAc.EquationSets.h"
 #include "GeoAc.Solver.h"
 
@@ -75,43 +76,57 @@ void GeoAc_DeleteSolutionArray(double ** & solution, int length){
 //-------------------------------------------------//
 //---------Functions To Output The Profile---------//
 //-------------------------------------------------//
-void GeoAc_WriteProfile(string file_name, double azimuth){
+void GeoAc_WriteProfile(string file_name, double azimuth, SplineStruct &splines){
 	ofstream file_out;	file_out.open(file_name.c_str() );
     
 	if(!file_out.is_open()){
 		cout << "Error opening file, check file name." << '\n';
 	} else {
-        for(int m = 0; m < 1400; m++){
-            double r0 = r_earth + m/10.0;
-            file_out << r0 << '\t';
-            file_out << pow(c(r0,Pi/4.0, 0)*1000.0,2)/(R*gam) << '\t';
-            file_out << u(r0,Pi/4.0, 0)*1000.0 << '\t';
-            file_out << v(r0,Pi/4.0, 0)*1000.0 << '\t';
-            file_out << rho(r0,Pi/4.0, 0) << '\t';
-            file_out << rho(r0, Pi/4.0, 0) * pow(c(r0,Pi/4.0, 0) * 1000.0, 2) / gam * 10.0 << '\t';
-            file_out << c(r0,Pi/4.0,0) << '\t';
-            file_out << c(r0,Pi/4.0,0) + cos((azimuth)*Pi/180.0)*u(r0,Pi/4.0,0) + sin((azimuth)*Pi/180.0)*v(r0,Pi/4.0,0) << '\n';
+            // Convert azimuth to radians
+            double azi_rad = azimuth*Pi/180.0;
+            for(int m = 0; m < 1400; m++){
+                double r0 = r_earth + m/10.0;
+                // Get results from c(), u(), v(), and rho() to write to files
+                double c_ = c(r0, Pi/4.0, 0, splines.Temp_Spline);
+                double u_ = u(r0, Pi/4.0, 0, splines.Windu_Spline);
+                double v_ = v(r0, Pi/4.0, 0, splines.Windv_Spline);
+                double rho_ = rho(r0, Pi/4.0, 0, splines.Density_Spline);
+                file_out << r0 << '\t';
+                file_out << pow(c_*1000.0,2)/(R*gam) << '\t';
+                file_out << u_*1000.0 << '\t';
+                file_out << v_*1000.0 << '\t';
+                file_out << rho_ << '\t';
+                file_out << rho_ * pow(c_ * 1000.0, 2) / gam * 10.0 << '\t';
+                file_out << c_ << '\t';
+                file_out << c_ + cos(azi_rad)*u_ + sin(azi_rad)*v_ << '\n';
         }
         file_out.close();
     }
 }
 
-void GeoAc_WriteProfile(string file_name, double lat_src, double lon_src, double azimuth){
+void GeoAc_WriteProfile(string file_name, double lat_src, double lon_src, double azimuth, SplineStruct &splines){
 	ofstream file_out;	file_out.open(file_name.c_str() );
     
 	if(!file_out.is_open()){
 		cout << "Error opening file, check file name." << '\n';
 	} else {
-        for(int m = 0; m < 1400; m++){
-            double r0 = r_earth + m/10.0;
-            file_out << r0 << '\t';
-            file_out << pow(c(r0,lat_src, lon_src)*1000.0,2)/(R*gam) << '\t';
-            file_out << u(r0,lat_src,lon_src)*1000.0 << '\t';
-            file_out << v(r0,lat_src,lon_src)*1000.0 << '\t';
-            file_out << rho(r0,lat_src,lon_src) << '\t';
-            file_out << rho(r0,lat_src,lon_src)*pow(c(r0,lat_src, lon_src) * 1000.0, 2) / gam * 10.0 << '\t';
-            file_out << c(r0,lat_src,lon_src) << '\t';
-            file_out << c(r0,lat_src,lon_src) + cos((azimuth)*Pi/180.0)*u(r0,lat_src,lon_src) + sin((azimuth)*Pi/180.0)*v(r0,lat_src,lon_src) << '\n';
+            // Convert azimuth to radians
+            double azi_rad = azimuth*Pi/180.0;
+            for(int m = 0; m < 1400; m++){
+                double r0 = r_earth + m/10.0;
+                // Get results from c(), u(), v(), and rho() to write to files
+                double c_ = c(r0, lat_src, lon_src, splines.Temp_Spline);
+                double u_ = u(r0, lat_src, lon_src, splines.Windu_Spline);
+                double v_ = v(r0, lat_src, lon_src, splines.Windv_Spline);
+                double rho_ = rho(r0, lat_src, lon_src, splines.Density_Spline);
+                file_out << r0 << '\t';
+                file_out << pow(c_*1000.0,2)/(R*gam) << '\t';
+                file_out << u_*1000.0 << '\t';
+                file_out << v_*1000.0 << '\t';
+                file_out << rho_ << '\t';
+                file_out << rho_ * pow(c_ * 1000.0, 2) / gam * 10.0 << '\t';
+                file_out << c_ << '\t';
+                file_out << c_ + cos(azi_rad)*u_ + sin(azi_rad)*v_ << '\n';
         }
         file_out.close();
     }

@@ -6,7 +6,7 @@
 #include <omp.h>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
 #include "GeoAc.EquationSets.h"
 
 using namespace std;

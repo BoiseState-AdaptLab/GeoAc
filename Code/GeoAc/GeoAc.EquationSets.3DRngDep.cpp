@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
 #include "G2S_MultiDimSpline3D.h"
 
 using namespace std;

@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
 
 using namespace std;
 

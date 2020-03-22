@@ -362,7 +362,7 @@ double c_diff(double r, double theta, double phi, int n, NaturalCubicSpline_1D &
 
 double c_ddiff(double r, double theta, double phi, int n1, int n2, NaturalCubicSpline_1D &Temp_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
-    double SndSpd = c(r, theta, phi, TempSpline);
+    double SndSpd = c(r, theta, phi, Temp_Spline);
     
     if(n1==0 && n2==0){
         return gamR / (2.0 * SndSpd) * Eval_Spline_ddf(r_eval,Temp_Spline)

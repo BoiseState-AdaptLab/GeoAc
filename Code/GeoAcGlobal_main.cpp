@@ -181,8 +181,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     int length = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10));
     char output_buffer [60];
 	
-    // Write the profile to file if neceessary
-    if(WriteAtmo) GeoAc_WriteProfile("atmo.dat", 90.0 - phi_min);
+    // Write the profile to file if neceessary, pass our new splines struct
+    if(WriteAtmo) GeoAc_WriteProfile("atmo.dat", 90.0 - phi_min, splines);
 
     // Get number of threads
     int num_threads = omp_get_max_threads();
@@ -357,7 +357,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   double GC_Dist1 = pow(sin((solution[k][1] - lat_src)/2.0),2);
                   double GC_Dist2 = cos(lat_src) * cos(solution[k][1]) * pow(sin((solution[k][2] - lon_src)/2.0),2);
                 
-                  double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + z_src, lat_src, lon_src) * solution[k][3]) * TO_RAD;
+                  double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2], splines.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, splines.Temp_Spline) * solution[k][3]) * TO_RAD;
                   double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * TO_RAD;
                   if(back_az < -180.0) back_az +=360.0;
                   if(back_az >  180.0) back_az -=360.0;
@@ -396,6 +396,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     }// End omp parallelization
 }
 
+/*
 void GeoAcGlobal_RunInteractive(char* inputs[], int count){
     double lat_src=30.0, lon_src=0.0, z_src=0.0;
     double freq=0.1, D, D_prev;
@@ -718,7 +719,7 @@ void GeoAcGlobal_RunEigDirect(char* inputs[], int count){
 
     GeoAc_Sources_Struct sources;
     GeoAc_3DEigenray_LM(Source_Loc, Receiver_Loc, theta_est, phi_est, freq, bounces, iterations, file_title, sources);
-}
+}*/
 
 
 
@@ -734,13 +735,13 @@ int main(int argc, char* argv[]){
         GeoAcGlobal_RunProp(argv, argc);
     
     } else if (strncmp(argv[1], "-interactive",12) == 0){
-        GeoAcGlobal_RunInteractive(argv, argc);
+        //GeoAcGlobal_RunInteractive(argv, argc);
         
     } else if (strncmp(argv[1], "-eig_search",11) == 0){
-        GeoAcGlobal_RunEigSearch(argv, argc);
+        //GeoAcGlobal_RunEigSearch(argv, argc);
         
     } else if (strncmp(argv[1], "-eig_direct",11) == 0){
-        GeoAcGlobal_RunEigDirect(argv, argc);
+        //GeoAcGlobal_RunEigDirect(argv, argc);
         
     } else {
         cout << "Unrecognized option: " << argv[1] << '\n';

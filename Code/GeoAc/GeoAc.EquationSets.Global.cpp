@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
 #include "../Atmo/G2S_GlobalSpline1D.h"
 #include "GeoAc.EquationSets.h"
 

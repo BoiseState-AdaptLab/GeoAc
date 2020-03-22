@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "GeoAc.EquationSets.h"
+#include "../Atmo/G2S_GlobalSpline1D.h"
 
 using namespace std;
 
@@ -22,6 +23,6 @@ double Modify_d_theta(double, double);                      // Function to modif
 
 // Function to identify inclination at fixed azimuth for specified arrival range
 bool GeoAc_EstimateEigenray(double [3], double [2], double, double, double &, double &, double &, int, double, GeoAc_Sources_Struct&);
-void GeoAc_3DEigenray_LM(double [3], double [2], double &, double &, double, int, int, char [], GeoAc_Sources_Struct&); // Function to identify exact eigenray
+void GeoAc_3DEigenray_LM(double [3], double [2], double &, double &, double, int, int, char [], GeoAc_Sources_Struct&, SplineStruct&); // Function to identify exact eigenray
 
 #endif /* GEOAC_EIGENRAY_H_ */

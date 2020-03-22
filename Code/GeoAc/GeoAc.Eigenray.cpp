@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <fstream>
 
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
 #include "GeoAc.Parameters.h"
 #include "GeoAc.EquationSets.h"
 #include "GeoAc.Solver.h"

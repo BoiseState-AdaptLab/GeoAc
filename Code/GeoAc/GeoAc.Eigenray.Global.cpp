@@ -7,7 +7,8 @@
 #include <fstream>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
+#include "../Atmo/Atmo_State.h"
+#include "../Atmo/G2S_GlobalSpline1D.h"
 #include "GeoAc.EquationSets.h"
 #include "GeoAc.Solver.h"
 #include "GeoAc.Interface.h"
@@ -138,7 +139,7 @@ bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double
 
 
 void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & lt, double & lp, double freq,
-                         int bnc_cnt, int iterate_limit, char title[], GeoAc_Sources_Struct &sources){
+                         int bnc_cnt, int iterate_limit, char title[], GeoAc_Sources_Struct &sources, SplineStruct &splines){
 	bool BreakCheck;
     char output_buffer [60];
     ofstream raypath;
@@ -239,7 +240,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
             }
             raypath.close();
                         
-            arrival_incl = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + Source_Loc[2], Source_Loc[0] * Pi / 180.0, Source_Loc[1] * Pi / 180.0) * solution[k][3]) * 180.0 / Pi;
+            arrival_incl = - asin(c(solution[k][0], solution[k][1], solution[k][2], splines.Temp_Spline) / c(r_earth + Source_Loc[2], Source_Loc[0] * Pi / 180.0, Source_Loc[1] * Pi / 180.0, splines.Temp_Spline) * solution[k][3]) * 180.0 / Pi;
             back_az_dev = (90.0 - atan2(-solution[k][4], -solution[k][5])*180.0/Pi) - Calc_Bearing(Receiver_Loc[0], Receiver_Loc[1], Source_Loc[0], Source_Loc[1]);
             if(back_az_dev > 180.0)  back_az_dev-=360.0;
             if(back_az_dev < -180.0) back_az_dev+=360.0;
