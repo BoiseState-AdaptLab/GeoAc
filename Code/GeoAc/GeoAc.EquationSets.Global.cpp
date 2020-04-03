@@ -162,10 +162,10 @@ void GeoAc_SetReflectionConditions(double** & solution, int k_end, GeoAc_Sources
 	GeoAc_ApproximateIntercept(solution, k_end, prev);
     
     double c_ref = c(prev[0], prev[1], prev[2], spl.Temp_Spline);
-	double dnu_r_ds = - 1.0/c_ref * (sources.c0/c_ref * c_diff(prev[0],prev[1],prev[2],0)
+	double dnu_r_ds = - 1.0/c_ref * (sources.c0/c_ref * c_diff(prev[0],prev[1],prev[2],0,spl.Temp_Spline)
                                                          + prev[3] * w_diff(prev[0],prev[1],prev[2],0)
-                                                            + prev[4] * v_diff(prev[0],prev[1],prev[2],0)
-                                                                + prev[5] * u_diff(prev[0],prev[1],prev[2],0)
+                                                            + prev[4] * v_diff(prev[0],prev[1],prev[2],0,spl.Windv_Spline)
+                                                                + prev[5] * u_diff(prev[0],prev[1],prev[2],0,spl.Windu_Spline)
                                                                     + c_ref/prev[0] * (pow(prev[4],2) + pow(prev[5],2)));
     
 	
@@ -241,20 +241,20 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     sources.v = v(r,theta,phi,spl.Windv_Spline);
     sources.u = u(r,theta,phi, spl.Windu_Spline);
     
-    sources.dc[0] = c_diff(r,theta,phi,0);
+    sources.dc[0] = c_diff(r,theta,phi,0,spl.Temp_Spline);
     sources.dw[0] = w_diff(r,theta,phi,0);
-    sources.dv[0] = v_diff(r,theta,phi,0);
-    sources.du[0] = u_diff(r,theta,phi,0);
+    sources.dv[0] = v_diff(r,theta,phi,0,spl.Windv_Spline);
+    sources.du[0] = u_diff(r,theta,phi,0,spl.Windu_Spline);
     
-    sources.dc[1] = c_diff(r,theta,phi,1);
+    sources.dc[1] = c_diff(r,theta,phi,1,spl.Temp_Spline);
     sources.dw[1] = w_diff(r,theta,phi,1);
-    sources.dv[1] = v_diff(r,theta,phi,1);
-    sources.du[1] = u_diff(r,theta,phi,1);
+    sources.dv[1] = v_diff(r,theta,phi,1,spl.Windv_Spline);
+    sources.du[1] = u_diff(r,theta,phi,1,spl.Windu_Spline);
     
-    sources.dc[2] = c_diff(r,theta,phi,2);
+    sources.dc[2] = c_diff(r,theta,phi,2,spl.Temp_Spline);
     sources.dw[2] = w_diff(r,theta,phi,2);
-    sources.dv[2] = v_diff(r,theta,phi,2);
-    sources.du[2] = u_diff(r,theta,phi,2);
+    sources.dv[2] = v_diff(r,theta,phi,2,spl.Windv_Spline);
+    sources.du[2] = u_diff(r,theta,phi,2,spl.Windu_Spline);
 
     // Update Eikonal vector magnitude and group velocity
     sources.nu_mag = 	 sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
@@ -314,26 +314,26 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
 
         
         for(int n = 0; n < 3; n++){
-            sources.dc[3] += R_lt[n]*c_diff(r,theta,phi,n);
+            sources.dc[3] += R_lt[n]*c_diff(r,theta,phi,n,spl.Temp_Spline);
             sources.dw[3] += R_lt[n]*w_diff(r,theta,phi,n);
-            sources.dv[3] += R_lt[n]*v_diff(r,theta,phi,n);
-            sources.du[3] += R_lt[n]*u_diff(r,theta,phi,n);
+            sources.dv[3] += R_lt[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
+            sources.du[3] += R_lt[n]*u_diff(r,theta,phi,n,spl.Windu_Spline);
             
-            sources.dc[4] += R_lp[n]*c_diff(r,theta,phi,n);
+            sources.dc[4] += R_lp[n]*c_diff(r,theta,phi,n,spl.Temp_Spline);
             sources.dw[4] += R_lp[n]*w_diff(r,theta,phi,n);
-            sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n);
-            sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n);
+            sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
+            sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n,spl.Windu_Spline);
             
             for(int m = 0; m < 3; m++){
-                sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n);
+                sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n, spl.Temp_Spline);
                 sources.ddw[m][0] += R_lt[n]*w_ddiff(r, theta, phi, m, n);
-                sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n);
-                sources.ddu[m][0] += R_lt[n]*u_ddiff(r, theta, phi, m, n);
+                sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n, spl.Windv_Spline);
+                sources.ddu[m][0] += R_lt[n]*u_ddiff(r, theta, phi, m, n, spl.Windu_Spline);
 
-                sources.ddc[m][1] += R_lp[n]*c_ddiff(r, theta, phi, m, n);
+                sources.ddc[m][1] += R_lp[n]*c_ddiff(r, theta, phi, m, n, spl.Temp_Spline);
                 sources.ddw[m][1] += R_lp[n]*w_ddiff(r, theta, phi, m, n);
-                sources.ddv[m][1] += R_lp[n]*v_ddiff(r, theta, phi, m, n);
-                sources.ddu[m][1] += R_lp[n]*u_ddiff(r, theta, phi, m, n);
+                sources.ddv[m][1] += R_lp[n]*v_ddiff(r, theta, phi, m, n, spl.Windv_Spline);
+                sources.ddu[m][1] += R_lp[n]*u_ddiff(r, theta, phi, m, n, spl.Windu_Spline);
             }
         }
         
@@ -526,17 +526,17 @@ double GeoAc_EvalHamiltonian_Deriv(double** solution, int index, SplineStruct &s
 
     double mag_nu = sqrt(nu[0]*nu[0]+nu[1]*nu[1]+nu[2]*nu[2]);
     
-    double dc_dlt = R_lt[0]*c_diff(r,theta,phi,0) + R_lt[1]*c_diff(r,theta,phi,1) + R_lt[2]*c_diff(r,theta,phi,2);
-    double dc_dlp = R_lp[0]*c_diff(r,theta,phi,0) + R_lp[1]*c_diff(r,theta,phi,1) + R_lp[2]*c_diff(r,theta,phi,2);
+    double dc_dlt = R_lt[0]*c_diff(r,theta,phi,0,spl.Temp_Spline) + R_lt[1]*c_diff(r,theta,phi,1,spl.Temp_Spline) + R_lt[2]*c_diff(r,theta,phi,2,spl.Temp_Spline);
+    double dc_dlp = R_lp[0]*c_diff(r,theta,phi,0,spl.Temp_Spline) + R_lp[1]*c_diff(r,theta,phi,1,spl.Temp_Spline) + R_lp[2]*c_diff(r,theta,phi,2,spl.Temp_Spline);
 
     double dw_dlt = R_lt[0]*w_diff(r,theta,phi,0) + R_lt[1]*w_diff(r,theta,phi,1) + R_lt[2]*w_diff(r,theta,phi,2);
     double dw_dlp = R_lp[0]*w_diff(r,theta,phi,0) + R_lp[1]*w_diff(r,theta,phi,1) + R_lp[2]*w_diff(r,theta,phi,2);
 
-    double dv_dlt = R_lt[0]*v_diff(r,theta,phi,0) + R_lt[1]*v_diff(r,theta,phi,1) + R_lt[2]*v_diff(r,theta,phi,2);
-    double dv_dlp = R_lp[0]*v_diff(r,theta,phi,0) + R_lp[1]*v_diff(r,theta,phi,1) + R_lp[2]*v_diff(r,theta,phi,2);
+    double dv_dlt = R_lt[0]*v_diff(r,theta,phi,0,spl.Windv_Spline) + R_lt[1]*v_diff(r,theta,phi,1,spl.Windv_Spline) + R_lt[2]*v_diff(r,theta,phi,2,spl.Windv_Spline);
+    double dv_dlp = R_lp[0]*v_diff(r,theta,phi,0,spl.Windv_Spline) + R_lp[1]*v_diff(r,theta,phi,1,spl.Windv_Spline) + R_lp[2]*v_diff(r,theta,phi,2,spl.Windv_Spline);
 
-    double du_dlt = R_lt[0]*u_diff(r,theta,phi,0) + R_lt[1]*u_diff(r,theta,phi,1) + R_lt[2]*u_diff(r,theta,phi,2);
-    double du_dlp = R_lp[0]*u_diff(r,theta,phi,0) + R_lp[1]*u_diff(r,theta,phi,1) + R_lp[2]*u_diff(r,theta,phi,2);
+    double du_dlt = R_lt[0]*u_diff(r,theta,phi,0,spl.Windu_Spline) + R_lt[1]*u_diff(r,theta,phi,spl.Windu_Spline) + R_lt[2]*u_diff(r,theta,phi,2,spl.Windu_Spline);
+    double du_dlp = R_lp[0]*u_diff(r,theta,phi,0,spl.Windu_Spline) + R_lp[1]*u_diff(r,theta,phi,1,spl.Windu_Spline) + R_lp[2]*u_diff(r,theta,phi,2,spl.Windu_Spline);
 
     
     double Resid_lt = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/mag_nu + mag_nu/c(r,theta,phi,spl.Temp_Spline) * dc_dlt
