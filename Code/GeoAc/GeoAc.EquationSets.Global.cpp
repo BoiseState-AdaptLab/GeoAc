@@ -76,15 +76,16 @@ void GeoAc_SetSystem(){
 //-------Fill in solution[0][n] with the appropriate initial values-----//
 //----------------------------------------------------------------------//
 void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, double phi0,
-                                double GeoAc_theta, double GeoAc_phi, GeoAc_Sources_Struct &sources){
+                                double GeoAc_theta, double GeoAc_phi, GeoAc_Sources_Struct &sources,
+				SplineStruct &spl){
     sources.src_loc[0] = r0 + r_earth;
     sources.src_loc[1] = theta0;
     sources.src_loc[2] = phi0;    
-    sources.c0 = c(r0 + r_earth, theta0, phi0);
+    sources.c0 = c(r0 + r_earth, theta0, phi0, spl.Temp_spline);
     
     double MachComps[3] = { w(r0 + r_earth, theta0, phi0)/sources.c0,
-                            v(r0 + r_earth, theta0, phi0)/sources.c0,
-                            u(r0 + r_earth, theta0, phi0)/sources.c0};
+                            v(r0 + r_earth, theta0, phi0, spl.Windv_Spline)/sources.c0,
+                            u(r0 + r_earth, theta0, phi0, spl.Windu_Spline)/sources.c0};
     double nu0[3] =    {sin(GeoAc_theta),  cos(GeoAc_theta)*sin(GeoAc_phi),    cos(GeoAc_theta)*cos(GeoAc_phi)};
     double mu0_lt[3] = {cos(GeoAc_theta), -sin(GeoAc_theta)*sin(GeoAc_phi),   -sin(GeoAc_theta)*cos(GeoAc_phi)};
     double mu0_lp[3] = {0.0,               cos(GeoAc_theta)*cos(GeoAc_phi),   -cos(GeoAc_theta)*sin(GeoAc_phi)};
@@ -154,11 +155,13 @@ void GeoAc_ApproximateIntercept(double ** solution, int k, double* & prev){
 //-------------------------------------------------------------------------//
 //-------Fill in solution[0][n] with the appropriate reflection values-----//
 //-------------------------------------------------------------------------//
-void GeoAc_SetReflectionConditions(double** & solution, int k_end, GeoAc_Sources_Struct &sources){
+void GeoAc_SetReflectionConditions(double** & solution, int k_end, GeoAc_Sources_Struct &sources, 
+				   SplineStruct &spl){
+
 	double* prev = new double [GeoAc_EqCnt];
 	GeoAc_ApproximateIntercept(solution, k_end, prev);
     
-    double c_ref = c(prev[0], prev[1], prev[2]);
+    double c_ref = c(prev[0], prev[1], prev[2], spl.Temp_Spline);
 	double dnu_r_ds = - 1.0/c_ref * (sources.c0/c_ref * c_diff(prev[0],prev[1],prev[2],0)
                                                          + prev[3] * w_diff(prev[0],prev[1],prev[2],0)
                                                             + prev[4] * v_diff(prev[0],prev[1],prev[2],0)
@@ -222,7 +225,9 @@ double GeoAc_Set_ds(double* current_values){
 //---------------------------------------//
 //-------Update the source functions-----//
 //---------------------------------------//
-void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Sources_Struct &sources, SplineStruct &splines_struct){
+void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Sources_Struct &sources, 
+			 SplineStruct &spl){
+
     // Extract ray location and eikonal vector components
     double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
 	double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
@@ -230,11 +235,11 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
 	// Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
     cout << "C function" << endl;
     cout << "inputs: r = " << r << ", theta = " << theta << ", phi = " << phi << endl;
-    sources.c = c(r,theta,phi,splines_struct.Temp_Spline);
+    sources.c = c(r,theta,phi,spl.Temp_Spline);
     cout << "output: sources.c = " << sources.c << endl;
     sources.w = w(r,theta,phi);
-    sources.v = v(r,theta,phi,splines_struct.Windv_Spline);
-    sources.u = u(r,theta,phi, splines_struct.Windu_Spline);
+    sources.v = v(r,theta,phi,spl.Windv_Spline);
+    sources.u = u(r,theta,phi, spl.Windu_Spline);
     
     sources.dc[0] = c_diff(r,theta,phi,0);
     sources.dw[0] = w_diff(r,theta,phi,0);
@@ -489,23 +494,27 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
 //-------------------------------------------------------------------//
 //-------Calculate the Hamiltonian (Eikonal) To Check For Errors-----//
 //-------------------------------------------------------------------//
-double GeoAc_EvalHamiltonian(double ray_length, double* current_values, double c0){
+double GeoAc_EvalHamiltonian(double ray_length, double* current_values, double c0i, 
+			     SplineStruct &spl){
+
 	double r = current_values[0],  theta = current_values[1], phi = current_values[2];
 	double nu[3] = {current_values[3], current_values[4], current_values[5]};
 	
-	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c0/c(r,theta,phi)
-                + (w(r,theta,phi)*nu[0] + v(r,theta,phi)*nu[1] + u(r,theta,phi)*nu[2])/c(r, theta, phi);
+	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c0/c(r,theta,phi,spl.Temp_Spline)
+                + (w(r,theta,phi)*nu[0] + v(r,theta,phi,spl.Windv_Spline)*nu[1] + u(r,theta,phi,spl.Windu_Spline)*nu[2])/c(r, theta, phi, spl.Temp_Spline);
 }
 
-double GeoAc_EvalHamiltonian(double** solution, int index, GeoAc_Sources_Struct &sources){
+double GeoAc_EvalHamiltonian(double** solution, int index, GeoAc_Sources_Struct &sources, 
+			     SplineStruct &spl){
+
 	double nu[3] = {solution[index][3], solution[index][4], solution[index][5]};
 	double r = solution[index][0],	theta = solution[index][1],	phi = solution[index][2];
 	double r0 = sources.src_loc[0], 	theta0 = sources.src_loc[1], 	phi0 = sources.src_loc[2];
     
-	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c(r0,theta0,phi0)/c(r,theta,phi) + (w(r,theta,phi)*nu[0] + v(r,theta,phi)*nu[1] + u(r,theta,phi)*nu[2])/c(r, theta, phi);
+	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c(r0,theta0,phi0,spl.Temp_Spline)/c(r,theta,phi,spl.Temp_Spline) + (w(r,theta,phi)*nu[0] + v(r,theta,phi,spl.Windv_Spline)*nu[1] + u(r,theta,phi,spl.Windu_Spline)*nu[2])/c(r, theta, phi, spl.Temp_Spline);
 }
 
-double GeoAc_EvalHamiltonian_Deriv(double** solution, int index){
+double GeoAc_EvalHamiltonian_Deriv(double** solution, int index, SplineStruct &spl){
 	double  r = solution[index][0],
             theta = solution[index][1],
             phi = solution[index][2],
@@ -530,10 +539,10 @@ double GeoAc_EvalHamiltonian_Deriv(double** solution, int index){
     double du_dlp = R_lp[0]*u_diff(r,theta,phi,0) + R_lp[1]*u_diff(r,theta,phi,1) + R_lp[2]*u_diff(r,theta,phi,2);
 
     
-    double Resid_lt = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/mag_nu + mag_nu/c(r,theta,phi) * dc_dlt
-                        + 1.0/c(r,theta,phi) * (mu_lt[0]*w(r,theta,phi) + mu_lt[1]*v(r,theta,phi) + mu_lt[2]*u(r,theta,phi) + nu[0]*dw_dlt + nu[1]*dv_dlt + nu[2]*du_dlt);
-    double Resid_lp = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/mag_nu + mag_nu/c(r,theta,phi) * dc_dlp
-                        + 1.0/c(r,theta,phi) * (mu_lp[0]*w(r,theta,phi) + mu_lp[1]*v(r,theta,phi) + mu_lp[2]*u(r,theta,phi) + nu[0]*dw_dlp + nu[1]*dv_dlp + nu[2]*du_dlp);
+    double Resid_lt = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/mag_nu + mag_nu/c(r,theta,phi,spl.Temp_Spline) * dc_dlt
+                        + 1.0/c(r,theta,phi,spl.Temp_Spline) * (mu_lt[0]*w(r,theta,phi) + mu_lt[1]*v(r,theta,phi,spl.Windv_Spline) + mu_lt[2]*u(r,theta,phi,spl.Windu_Spline) + nu[0]*dw_dlt + nu[1]*dv_dlt + nu[2]*du_dlt);
+    double Resid_lp = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/mag_nu + mag_nu/c(r,theta,phi,spl.Temp_Spline) * dc_dlp
+                        + 1.0/c(r,theta,phi,spl.Temp_Spline) * (mu_lp[0]*w(r,theta,phi) + mu_lp[1]*v(r,theta,phi,spl.Windv_Spline) + mu_lp[2]*u(r,theta,phi,spl.Windu_Spline) + nu[0]*dw_dlp + nu[1]*dv_dlp + nu[2]*du_dlp);
     
     return sqrt(Resid_lt*Resid_lt + Resid_lp*Resid_lp);
 
@@ -569,7 +578,7 @@ bool GeoAc_GroundCheck(double ** solution, int index){
 //----------------------------------------------------------------------------------//
 //-------Calculate the travel time from source to location or between locations-----//
 //----------------------------------------------------------------------------------//
-double GeoAc_TravelTime(double ** solution, int index){
+double GeoAc_TravelTime(double ** solution, int index, SplineStruct &spl){
     double dr, dt, dp, ds, r, t, p, nu[3], nu_mag, c_prop[3], c_prop_mag;
 	double traveltime = 0.0;
 	
@@ -591,9 +600,9 @@ double GeoAc_TravelTime(double ** solution, int index){
 		nu[2] = solution[n][5] + (solution[n+1][5] - solution[n][5])/2.0;
 		nu_mag = sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
         
-		c_prop[0] = c(r,t,p)*nu[0]/nu_mag + w(r,t,p);
-		c_prop[1] = c(r,t,p)*nu[1]/nu_mag + v(r,t,p);
-		c_prop[2] = c(r,t,p)*nu[2]/nu_mag + u(r,t,p);
+		c_prop[0] = c(r,t,p,spl.Temp_Spline)*nu[0]/nu_mag + w(r,t,p);
+		c_prop[1] = c(r,t,p,spl.Temp_Spline)*nu[1]/nu_mag + v(r,t,p,spl.Windv_Spline);
+		c_prop[2] = c(r,t,p,spl.Temp_Spline)*nu[2]/nu_mag + u(r,t,p,spl.Windu_Spline);
 		c_prop_mag = sqrt(pow(c_prop[0],2) + pow(c_prop[1],2) + pow(c_prop[2],2));
         
 		traveltime += ds/c_prop_mag;	// Add contribution to the travel time
@@ -603,7 +612,9 @@ double GeoAc_TravelTime(double ** solution, int index){
 }
 
 
-void GeoAc_TravelTimeSegment(double & time, double ** solution, int start, int end){
+void GeoAc_TravelTimeSegment(double & time, double ** solution, int start, int end, 
+			     SplineStruct &spl){
+
     double dr, dt, dp, ds, r, t, p, nu[3], nu_mag, c_prop[3], c_prop_mag;
     
 	for (int n = start; n < end; n++){
@@ -624,9 +635,9 @@ void GeoAc_TravelTimeSegment(double & time, double ** solution, int start, int e
 		nu[2] = solution[n][5] + (solution[n+1][5] - solution[n][5])/2.0;
 		nu_mag = sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
         
-		c_prop[0] = c(r,t,p) * nu[0]/nu_mag + w(r,t,p);
-		c_prop[1] = c(r,t,p) * nu[1]/nu_mag + v(r,t,p);
-		c_prop[2] = c(r,t,p) * nu[2]/nu_mag + u(r,t,p);
+		c_prop[0] = c(r,t,p,spl.Temp_Spline) * nu[0]/nu_mag + w(r,t,p);
+		c_prop[1] = c(r,t,p,spl.Temp_Spline) * nu[1]/nu_mag + v(r,t,p,spl.Windv_Spline);
+		c_prop[2] = c(r,t,p,spl.Temp_Spline) * nu[2]/nu_mag + u(r,t,p,spl.Windu_Spline);
 		c_prop_mag = sqrt(pow(c_prop[0],2) + pow(c_prop[1],2) + pow(c_prop[2],2));
         
 		time += ds/c_prop_mag;	// Add contribution to the travel time
@@ -636,12 +647,13 @@ void GeoAc_TravelTimeSegment(double & time, double ** solution, int start, int e
 //-----------------------------------------------------------------------------------//
 //-------Calculate the Jacobian determinant and from it the ampltude coefficient-----//
 //-----------------------------------------------------------------------------------//
-double GeoAc_Jacobian(double ** solution, int index){
+double GeoAc_Jacobian(double ** solution, int index, SplineStruct *spl){
+
 	double r = solution[index][0], theta = solution[index][1], phi = solution[index][2];
     
 	double nu[3] = 		{solution[index][3], solution[index][4], solution[index][5]};
 	double nu_mag = 	sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
-	double c_prop[3] = 	{c(r,theta,phi)*nu[0]/nu_mag + w(r,theta,phi), 	c(r,theta,phi)*nu[1]/nu_mag + v(r,theta,phi), 	c(r,theta,phi)*nu[2]/nu_mag + u(r,theta,phi)};
+	double c_prop[3] = 	{c(r,theta,phi,spl.Temp_Spline)*nu[0]/nu_mag + w(r,theta,phi), 	c(r,theta,phi,spl.Temp_Spline)*nu[1]/nu_mag + v(r,theta,phi,spl.Windv_Spline), 	c(r,theta,phi,spl.Temp_Spline)*nu[2]/nu_mag + u(r,theta,phi,spl.Windu_Spline)};
 	double c_prop_mag = sqrt(pow(c_prop[0],2) + pow(c_prop[1],2) + pow(c_prop[2],2));
     
 	double dr_ds = c_prop[0]/c_prop_mag,	dt_ds = 1.0/r*c_prop[1]/c_prop_mag,	dp_ds = 1.0/(r*sin(theta))*c_prop[2]/c_prop_mag;
@@ -652,23 +664,26 @@ double GeoAc_Jacobian(double ** solution, int index){
 }
 
 
-double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta, double GeoAc_phi, GeoAc_Sources_Struct &sources){
+double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta, 
+		       double GeoAc_phi, GeoAc_Sources_Struct &sources
+		       SplineStruct *spl){
+
     double r0 = sources.src_loc[0], theta0 = sources.src_loc[1], phi0 = sources.src_loc[2];
 	double r = solution[index][0], theta = solution[index][1], phi = solution[index][2];
 	double nu[3] = {solution[index][3], solution[index][4], solution[index][5]};
     double nu0[3] = {sin(GeoAc_theta),  cos(GeoAc_theta)*sin(GeoAc_phi),    cos(GeoAc_theta)*cos(GeoAc_phi)};
     
-    double  nu_mag = (sources.c0 - nu[0]*w(r,theta,phi) - nu[1]*v(r,theta,phi) - nu[2]*u(r,theta,phi))/c(r,theta,phi),
+    double  nu_mag = (sources.c0 - nu[0]*w(r,theta,phi) - nu[1]*v(r,theta,phi,spl.Windv_Spline) - nu[2]*u(r,theta,phi,spl.Windu_Spline))/c(r,theta,phi,spl.Temp_Spline),
             nu_mag0 = sources.nu0, 
-            c_prop[3] =  {c(r,theta,phi)*nu[0]/nu_mag + w(r,theta,phi),	c(r,theta,phi)*nu[1]/nu_mag + v(r,theta,phi), c(r,theta,phi)*nu[2]/nu_mag + u(r, theta, phi)},
-            c_prop0[3] = {sources.c0*nu0[0]/nu_mag0 + w(r0,theta0,phi0), sources.c0*nu0[1]/nu_mag + v(r0,theta0,phi0), sources.c0*nu0[2]/nu_mag + u(r0, theta0, phi0)};
+            c_prop[3] =  {c(r,theta,phi,spl.Temp_Spline)*nu[0]/nu_mag + w(r,theta,phi),	c(r,theta,phi,spl.Temp_Spline)*nu[1]/nu_mag + v(r,theta,phi,spl.Windv_Spline), c(r,theta,phi,spl.Temp_Spline)*nu[2]/nu_mag + u(r, theta, phi,spl.Windu_Spline)},
+            c_prop0[3] = {sources.c0*nu0[0]/nu_mag0 + w(r0,theta0,phi0), sources.c0*nu0[1]/nu_mag + v(r0,theta0,phi0,spl.Windv_Spline), sources.c0*nu0[2]/nu_mag + u(r0, theta0, phi0,spl.Windu_Spline)};
     
 	double  c_prop_mag =  sqrt(pow(c_prop[0],2) +  pow(c_prop[1],2) +  pow(c_prop[2],2)),
             c_prop_mag0 = sqrt(pow(c_prop0[0],2) + pow(c_prop0[1],2) + pow(c_prop0[2],2));
 	
 	double D = GeoAc_Jacobian(solution, index);	
-	double Amp_Num = rho(r,theta,phi) *  nu_mag * pow(c(r,theta,phi),3)  *  c_prop_mag0 * cos(GeoAc_theta);
-	double Amp_Den = rho(r0,theta0,phi0)*nu_mag0* pow(c(r0,theta0,phi0),3)* c_prop_mag  * D;
+	double Amp_Num = rho(r,theta,phi,spl.Density_Spline) *  nu_mag * pow(c(r,theta,phi,spl.Temp_Spline),3)  *  c_prop_mag0 * cos(GeoAc_theta);
+	double Amp_Den = rho(r0,theta0,phi0,spl.Density_Spline)*nu_mag0* pow(c(r0,theta0,phi0,spl.Temp_Spline),3)* c_prop_mag  * D;
     
 	return 1.0/(4.0*Pi)*sqrt(fabs(Amp_Num/Amp_Den));	
 }
