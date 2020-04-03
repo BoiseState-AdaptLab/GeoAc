@@ -296,7 +296,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               double GeoAc_theta = double(theta)*TO_RAD;
               double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
             
-              GeoAc_SetInitialConditions(solution, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources);
+              GeoAc_SetInitialConditions(solution, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources, splines);
 
               //cout << "\nPrinting sources struct. Thread id: " << tid << endl;
               //PRINTSTRUCT(sources);
@@ -310,7 +310,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 
                   // This gets set to false at the beginining of Propogate_RK4()
                   bool BreakCheck;
-                  k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+                  k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
 
                   cerr << "Finished RK4 " << tid << endl;
                 
@@ -318,21 +318,21 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                       // Used to check for a change in sign from the result of GeoAc_Jacobian()
                       double D, D_prev;
                       if(WriteCaustics){                    
-                          D_prev = GeoAc_Jacobian(solution,1);
+                          D_prev = GeoAc_Jacobian(solution,1, splines);
                       }
                     
                       cerr << "Made it to k for loop " << tid << endl;
                       for(int m = 1; m < k ; m++){     // write profiles to data files and vector arrays
-                          if(WriteCaustics) D = GeoAc_Jacobian(solution,m);
-                          GeoAc_TravelTimeSegment(travel_time_sum, solution, m-1,m);
-                          GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq);
+                          if(WriteCaustics) D = GeoAc_Jacobian(solution,m, splines);
+                          GeoAc_TravelTimeSegment(travel_time_sum, solution, m-1,m, splines);
+                          GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq, splines);
                         
                           if(WriteRays && m % 25 == 0){
                               raypaths[tid] << solution[m][0] - r_earth;
                               raypaths[tid] << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
                               raypaths[tid] << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
                               if(CalcAmp){    raypaths[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
-                                                                                          GeoAc_phi,sources));}
+                                                                                          GeoAc_phi,sources, splines));}
                               else{           raypaths[tid] << '\t' << 0.0;}
                               raypaths[tid] << '\t' << -attenuation;
                               raypaths[tid] << '\t' << travel_time_sum << '\n';
@@ -347,8 +347,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                           if(WriteCaustics) D_prev = D;
                       }
                   } else {
-                      travel_time_sum+= GeoAc_TravelTime(solution, k);
-                      attenuation+= GeoAc_SB_Atten(solution,k,freq);
+                      travel_time_sum+= GeoAc_TravelTime(solution, k, splines);
+                      attenuation+= GeoAc_SB_Atten(solution,k,freq, splines);
                   }
                 
                   if(BreakCheck) break;
@@ -372,12 +372,12 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   results[tid] << '\t' << r_max;
                   results[tid] << '\t' << inclination;
                   results[tid] << '\t' << back_az;
-                  if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi,sources));}
+                  if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi,sources, splines));}
                   else{           results[tid] << '\t' << 0.0;}
                   results[tid] << '\t' << -attenuation;
                   results[tid] << '\n';
                 
-                  GeoAc_SetReflectionConditions(solution,k, sources);	
+                  GeoAc_SetReflectionConditions(solution,k, sources, splines);	
               }
               if(WriteRays){raypaths[tid] << '\n';}
               // If there were no bounces, then we will clear nothing

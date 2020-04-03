@@ -44,7 +44,7 @@ double Modify_d_theta(double dr, double dr_dtheta){
 }
 
 
-bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double theta_min, double theta_max, double & theta_estimate, double & phi_estimate, double & theta_next, int bounces, double azimuth_error_limit, GeoAc_Sources_Struct &sources){
+bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double theta_min, double theta_max, double & theta_estimate, double & phi_estimate, double & theta_next, int bounces, double azimuth_error_limit, GeoAc_Sources_Struct &sources, SplineStruct &splines){
     
     double GC_r_rcvr = Calc_GC_Distance(Source_Loc[0], Source_Loc[1], Receiver_Loc[0], Receiver_Loc[1]);
     double phi = Calc_Bearing(Source_Loc[0], Source_Loc[1], Receiver_Loc[0], Receiver_Loc[1]);
@@ -77,13 +77,13 @@ bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double
             
             double GeoAc_theta =	theta*Pi/180.0;
             GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0,
-                                       GeoAc_theta, GeoAc_phi, sources);
+                                       GeoAc_theta, GeoAc_phi, sources, splines);
             
-            k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+            k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
             if(!BreakCheck){
                 for(int n_bnc = 1; n_bnc <= bounces; n_bnc++){
-                    GeoAc_SetReflectionConditions(solution,k, sources);
-                    k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+                    GeoAc_SetReflectionConditions(solution,k, sources, splines);
+                    k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
                     if(BreakCheck) break;
                 }
             }
@@ -171,14 +171,14 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
         double GeoAc_theta =	lt*Pi/180.0;
 	double	GeoAc_phi = 	lp*Pi/180.0;
 		GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0,
-                                           GeoAc_theta, GeoAc_phi, sources);
+                                           GeoAc_theta, GeoAc_phi, sources, splines);
         if(verbose_output) cout << '\t' << '\t' << "Plotting ray path with theta = " << lt << ", phi = " << 90.0 - lp;
 		
-        k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+        k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
         if(BreakCheck) break;
         for(int n_bnc = 1; n_bnc <= bnc_cnt; n_bnc++){
-            GeoAc_SetReflectionConditions(solution,k, sources);
-            k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+            GeoAc_SetReflectionConditions(solution,k, sources, splines);
+            k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
             if(BreakCheck) break;
         }
         if(BreakCheck) break;
@@ -204,35 +204,35 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
             travel_time = 0.0;
             
             GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0,
-                                       GeoAc_theta, GeoAc_phi, sources);
-            k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+                                       GeoAc_theta, GeoAc_phi, sources, splines);
+            k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
 
             for(int m=1;m<k;m++){
-                GeoAc_TravelTimeSegment(travel_time, solution, m-1,m);
-                GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq);
+                GeoAc_TravelTimeSegment(travel_time, solution, m-1,m, splines);
+                GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq, splines);
                     
                 if(m % 25 == 0){
                     raypath << solution[m][0] - r_earth;
                     raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                     raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m, GeoAc_theta,GeoAc_phi, sources));
+                    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m, GeoAc_theta,GeoAc_phi, sources, splines));
                     raypath << '\t' << -attenuation;
                     raypath << '\t' << travel_time << '\n';
                 }
             }
             for(int n_bnc = 1; n_bnc <= bnc_cnt; n_bnc++){
-                GeoAc_SetReflectionConditions(solution,k, sources);
+                GeoAc_SetReflectionConditions(solution,k, sources, splines);
                 
-                k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+                k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
                 for(int m = 1; m < k; m++){
-                    GeoAc_TravelTimeSegment(travel_time, solution, m-1,m);
-                    GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq);
+                    GeoAc_TravelTimeSegment(travel_time, solution, m-1,m, splines);
+                    GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq, splines);
                     
                     if(m % 25 == 0){
                         raypath << solution[m][0] - r_earth;
                         raypath << '\t' << solution[m][1]*180.0/3.14159;
                         raypath << '\t' << solution[m][2]*180.0/3.14159;
-                        raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m, GeoAc_theta,GeoAc_phi, sources));
+                        raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m, GeoAc_theta,GeoAc_phi, sources, splines));
                         raypath << '\t' << attenuation;
                         raypath << '\t' << travel_time << '\n';
                     }
@@ -252,7 +252,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
                 cout << '\t' << '\t' << '\t' << "theta, phi = " << setprecision(8) << lt << ", " << 90.0 - lp << " degrees." << '\n';
                 cout << '\t' << '\t' << '\t' << "Travel Time = " << travel_time << " seconds." << '\n';
                 cout << '\t' << '\t' << '\t' << "Celerity = " << Calc_GC_Distance(Source_Loc[0], Source_Loc[1],Receiver_Loc[0],Receiver_Loc[1])/travel_time << " km/s." << '\n';
-                cout << '\t' << '\t' << '\t' << "Amplitude = " << 20.0*log10(GeoAc_Amplitude(solution,k, GeoAc_theta,GeoAc_phi, sources)) << " dB." << '\n';
+                cout << '\t' << '\t' << '\t' << "Amplitude = " << 20.0*log10(GeoAc_Amplitude(solution,k, GeoAc_theta,GeoAc_phi, sources, splines)) << " dB." << '\n';
                 cout << '\t' << '\t' << '\t' << "Atmospheric Attenuation = " << -attenuation << " dB." << '\n';
                 cout << '\t' << '\t' << '\t' << "Arrival inclination = " << arrival_incl << " degrees." << '\n';
                 cout << '\t' << '\t' << '\t' << "Bearing to source = " << Calc_Bearing(Receiver_Loc[0], Receiver_Loc[1], Source_Loc[0], Source_Loc[1]) << " degrees." << '\n';
@@ -264,7 +264,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
             results << '\t' << "theta, phi = " << setprecision(8) << lt << ", " << 90.0 - lp << " degrees." << '\n';
             results << '\t' << "Travel Time = " << travel_time << " seconds." << '\n';
             results << '\t' << "Celerity = " << Calc_GC_Distance(Source_Loc[0], Source_Loc[1],Receiver_Loc[0],Receiver_Loc[1])/travel_time << " km/s." << '\n';
-            results << '\t' << "Amplitude (geometric) = " << 20.0*log10(GeoAc_Amplitude(solution,k, GeoAc_theta,GeoAc_phi, sources)) << " dB." << '\n';
+            results << '\t' << "Amplitude (geometric) = " << 20.0*log10(GeoAc_Amplitude(solution,k, GeoAc_theta,GeoAc_phi, sources, splines)) << " dB." << '\n';
             results << '\t' << "Atmospheric attenuation = " << -attenuation << " dB." << '\n';
             results << '\t' << "Arrival inclination = " << arrival_incl << " degrees." << '\n';
             results << '\t' << "Bearing to source = " << Calc_Bearing(Receiver_Loc[0], Receiver_Loc[1], Source_Loc[0], Source_Loc[1]) << " degrees." << '\n';

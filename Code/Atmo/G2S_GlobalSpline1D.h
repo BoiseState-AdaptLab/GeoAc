@@ -38,18 +38,18 @@ struct SplineStruct{
     int r_cnt;          // Number of vertical points
     int accel;          // Acceleration index
     double* r_vals;     // r_k elements (r_cnt length)
-    static double* T_vals;    // Temperature at r_k
-    static double* u_vals;    // E-W winds at r_k
-    static double* v_vals;    // N-S winds at r_k
-    static double* rho_vals;  // Density at r_k
+    double* T_vals;    // Temperature at r_k
+    double* u_vals;    // E-W winds at r_k
+    double* v_vals;    // N-S winds at r_k
+    double* rho_vals;  // Density at r_k
     //----------------------------------------------------//
     ////-------------Combined Function to Input-------------//
     ////------G2S Files and Generate the Interpolation------//
     ////----------------------------------------------------//
-    static struct NaturalCubicSpline_1D Temp_Spline;
-    static struct NaturalCubicSpline_1D Windu_Spline;
-    static struct NaturalCubicSpline_1D Windv_Spline;
-    static struct NaturalCubicSpline_1D Density_Spline;
+    struct NaturalCubicSpline_1D Temp_Spline;
+    struct NaturalCubicSpline_1D Windu_Spline;
+    struct NaturalCubicSpline_1D Windv_Spline;
+    struct NaturalCubicSpline_1D Density_Spline;
 };
 
 

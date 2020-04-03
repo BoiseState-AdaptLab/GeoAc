@@ -81,7 +81,7 @@ void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, 
     sources.src_loc[0] = r0 + r_earth;
     sources.src_loc[1] = theta0;
     sources.src_loc[2] = phi0;    
-    sources.c0 = c(r0 + r_earth, theta0, phi0, spl.Temp_spline);
+    sources.c0 = c(r0 + r_earth, theta0, phi0, spl.Temp_Spline);
     
     double MachComps[3] = { w(r0 + r_earth, theta0, phi0)/sources.c0,
                             v(r0 + r_earth, theta0, phi0, spl.Windv_Spline)/sources.c0,
@@ -494,7 +494,7 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
 //-------------------------------------------------------------------//
 //-------Calculate the Hamiltonian (Eikonal) To Check For Errors-----//
 //-------------------------------------------------------------------//
-double GeoAc_EvalHamiltonian(double ray_length, double* current_values, double c0i, 
+double GeoAc_EvalHamiltonian(double ray_length, double* current_values, double c0, 
 			     SplineStruct &spl){
 
 	double r = current_values[0],  theta = current_values[1], phi = current_values[2];
@@ -535,7 +535,7 @@ double GeoAc_EvalHamiltonian_Deriv(double** solution, int index, SplineStruct &s
     double dv_dlt = R_lt[0]*v_diff(r,theta,phi,0,spl.Windv_Spline) + R_lt[1]*v_diff(r,theta,phi,1,spl.Windv_Spline) + R_lt[2]*v_diff(r,theta,phi,2,spl.Windv_Spline);
     double dv_dlp = R_lp[0]*v_diff(r,theta,phi,0,spl.Windv_Spline) + R_lp[1]*v_diff(r,theta,phi,1,spl.Windv_Spline) + R_lp[2]*v_diff(r,theta,phi,2,spl.Windv_Spline);
 
-    double du_dlt = R_lt[0]*u_diff(r,theta,phi,0,spl.Windu_Spline) + R_lt[1]*u_diff(r,theta,phi,spl.Windu_Spline) + R_lt[2]*u_diff(r,theta,phi,2,spl.Windu_Spline);
+    double du_dlt = R_lt[0]*u_diff(r,theta,phi,0,spl.Windu_Spline) + R_lt[1]*u_diff(r,theta,phi,1,spl.Windu_Spline) + R_lt[2]*u_diff(r,theta,phi,2,spl.Windu_Spline);
     double du_dlp = R_lp[0]*u_diff(r,theta,phi,0,spl.Windu_Spline) + R_lp[1]*u_diff(r,theta,phi,1,spl.Windu_Spline) + R_lp[2]*u_diff(r,theta,phi,2,spl.Windu_Spline);
 
     
@@ -647,7 +647,7 @@ void GeoAc_TravelTimeSegment(double & time, double ** solution, int start, int e
 //-----------------------------------------------------------------------------------//
 //-------Calculate the Jacobian determinant and from it the ampltude coefficient-----//
 //-----------------------------------------------------------------------------------//
-double GeoAc_Jacobian(double ** solution, int index, SplineStruct *spl){
+double GeoAc_Jacobian(double ** solution, int index, SplineStruct &spl){
 
 	double r = solution[index][0], theta = solution[index][1], phi = solution[index][2];
     
@@ -665,8 +665,8 @@ double GeoAc_Jacobian(double ** solution, int index, SplineStruct *spl){
 
 
 double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta, 
-		       double GeoAc_phi, GeoAc_Sources_Struct &sources
-		       SplineStruct *spl){
+		       double GeoAc_phi, GeoAc_Sources_Struct &sources,
+		       SplineStruct &spl){
 
     double r0 = sources.src_loc[0], theta0 = sources.src_loc[1], phi0 = sources.src_loc[2];
 	double r = solution[index][0], theta = solution[index][1], phi = solution[index][2];
@@ -681,7 +681,7 @@ double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta,
 	double  c_prop_mag =  sqrt(pow(c_prop[0],2) +  pow(c_prop[1],2) +  pow(c_prop[2],2)),
             c_prop_mag0 = sqrt(pow(c_prop0[0],2) + pow(c_prop0[1],2) + pow(c_prop0[2],2));
 	
-	double D = GeoAc_Jacobian(solution, index);	
+	double D = GeoAc_Jacobian(solution, index, spl);	
 	double Amp_Num = rho(r,theta,phi,spl.Density_Spline) *  nu_mag * pow(c(r,theta,phi,spl.Temp_Spline),3)  *  c_prop_mag0 * cos(GeoAc_theta);
 	double Amp_Den = rho(r0,theta0,phi0,spl.Density_Spline)*nu_mag0* pow(c(r0,theta0,phi0,spl.Temp_Spline),3)* c_prop_mag  * D;
     
@@ -691,7 +691,7 @@ double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta,
 //--------------------------------------------------------------------------//
 //------Integrate the Sutherland Bass Attenuation Through the Ray Path------//
 //--------------------------------------------------------------------------//
-double GeoAc_SB_Atten(double ** solution, int end, double freq){
+double GeoAc_SB_Atten(double ** solution, int end, double freq, SplineStruct &spl){
 	double dr, dt, dp, ds, r, t, p;
     double atten = 0.0;
 	for (int n = 0; n < end; n++){
@@ -706,12 +706,12 @@ double GeoAc_SB_Atten(double ** solution, int end, double freq){
         
         ds = sqrt(pow(dr,2) + pow(r*dt,2) + pow(r*sin(t)*dp,2));
         
-		atten += SuthBass_Alpha(r, t, p, freq)*ds;	// Add contribution to the travel time
+		atten += SuthBass_Alpha(r, t, p, freq, spl)*ds;	// Add contribution to the travel time
 	}
     return atten;
 }
 
-void GeoAc_SB_AttenSegment(double & atten, double ** solution, int start, int end, double freq){
+void GeoAc_SB_AttenSegment(double & atten, double ** solution, int start, int end, double freq, SplineStruct &spl){
 	double dr, dt, dp, ds, r, t, p;
 	for (int n = start; n < end; n++){
 		
@@ -725,7 +725,7 @@ void GeoAc_SB_AttenSegment(double & atten, double ** solution, int start, int en
         
         ds = sqrt(pow(dr,2) + pow(r*dt,2) + pow(r*sin(t)*dp,2));
 
-		atten += SuthBass_Alpha(r, t, p, freq)*ds;	// Add contribution to the travel time
+		atten += SuthBass_Alpha(r, t, p, freq, spl)*ds;	// Add contribution to the travel time
 	}
 }
 
@@ -733,11 +733,11 @@ void GeoAc_SB_AttenSegment(double & atten, double ** solution, int start, int en
 //---------Count the caustics encountered by monitoring---------//
 //----how many times the Jacobian determinant changes sign------//
 //--------------------------------------------------------------//
-int GeoAc_CausticCnt(double ** solution, int start, int end){
+int GeoAc_CausticCnt(double ** solution, int start, int end, SplineStruct &spl){
 	int count = 0;
-	double current, prev = GeoAc_Jacobian(solution, 1);
+	double current, prev = GeoAc_Jacobian(solution, 1, spl);
 	for(int n = start; n < end; n++){
-		current = GeoAc_Jacobian(solution,n);
+		current = GeoAc_Jacobian(solution,n, spl);
 		if(current*prev < 0.0){
 			count++;
 		}
