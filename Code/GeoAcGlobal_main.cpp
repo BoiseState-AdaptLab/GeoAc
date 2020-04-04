@@ -254,18 +254,39 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     cout << "Got to for loop" << endl;
 
     int k;
-    
+   
+    // Create an array of structs, one for each thread
+    // Each thread needs its own struct to modify and read from
+    SplineStruct spline_structs[num_threads];
+    for (int i = 0; i < num_threads; i++){
+        spline_structs[i] = splines;
+        //cout << splines.Temp_Spline.length << " = " << spline_structs[i].Temp_Spline.length << endl;
+    }
+
+    cout << " Original r_vals = " << splines.r_vals[0] << endl;
+ 
+    cout << " Copy r_vals = " << spline_structs[0].r_vals[0] << endl;
+
+    // Delete the original struct once it has been copied, we don't need it anymore
+    //delete splines;
+ 
     // Start parallel, set out variables that can be shared - constants, 
     // information variables, angle variables, output_variables
     #pragma omp parallel default(none) shared(cout, cerr, r_earth, Pi, \
      solutions, length, bounces, freq, lat_src, lon_src, z_src, \
      phi_min, phi_max, phi_step, theta_min, theta_max, theta_step, \
-     WriteRays, WriteCaustics, CalcAmp, results, raypaths, caustics) \
-     private(k, splines)
+     WriteRays, WriteCaustics, CalcAmp, results, raypaths, caustics, spline_structs) \
+     private(k)
     {
+      
       int tid = omp_get_thread_num();
       GeoAc_BuildSolutionArray(solutions[tid],length);
       double** solution = solutions[tid];
+
+      //Get this thread's struct from the array
+      SplineStruct splines = spline_structs[tid];
+
+      cout << "In Thread r_vals = " << splines.r_vals[0] << endl;
 
       cerr << "Opened thread " << tid << endl;
 

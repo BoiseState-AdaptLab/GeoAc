@@ -23,6 +23,8 @@ double r_min, r_max;
 void GeoAc_SetPropRegion(NaturalCubicSpline_1D &Windu_Spline){
     r_min = Windu_Spline.x_vals[0];
     r_max = Windu_Spline.x_vals[Windu_Spline.length-1];
+
+    cout << "Setting r bounds: " << r_min << " -> " << r_max << endl;
     
     GeoAc_vert_limit  =	r_max;
     GeoAc_range_limit = 1500.0;
@@ -116,6 +118,8 @@ void SetUp_G2S_Arrays(char* file_name, SplineStruct &spline){
 void Load_G2S(char* file_name, char* option, SplineStruct &spline){
     ifstream file_in; double temp;
     file_in.open(file_name);
+
+    cout << "Load G2S: r_earth = " << r_earth << " z_grnd = " << z_grnd << endl;
     
     if (strncmp(option, "zTuvdp",6) == 0){
         for (int nr = 0; nr < r_cnt; nr++){
@@ -150,6 +154,9 @@ void Load_G2S(char* file_name, char* option, SplineStruct &spline){
     } else {
         cout << "Unrecognized profile option: " << option << ".  Valid options are: zTuvdp and zuvwTdp" << '\n';
     }
+
+    cout << " First and Last of r_vals = " << spline.r_vals[0] << " " << spline.r_vals[spline.r_cnt] << endl;
+
     file_in.close();
 }
 
@@ -217,9 +224,12 @@ void Set_Slopes(struct NaturalCubicSpline_1D & Spline){
 //-----and Evaluate the 1D Vertical Splines------//
 //-----------------------------------------------//
 int Find_Segment(double x, double* x_vals, int length, int & prev){
+    //cout << "Called Find_Segment()" << endl;
     int index = length + 1;
     bool done = false;
     
+    //cout << sizeof(x_vals) / sizeof(x_vals[0])  << " " << length << endl;
+
     if(x > x_vals[length-1] || x < x_vals[0]){
         cout << "Cannot interpolate outside of given bounds.  x = " << x << " is invalid." << '\n';
     } else {
@@ -260,14 +270,28 @@ int Find_Segment(double x, double* x_vals, int length, int & prev){
 }
 
 double Eval_Spline_f(double x, struct NaturalCubicSpline_1D & Spline){
+    //cout << "Called Eval_Spline_f" << endl;
+
+    cout << "Eval: x = " << x << endl;
+
     int k = Find_Segment(x, Spline.x_vals, Spline.length, Spline.accel);
+ 
+    cout << "Eval: k = " << k << " spline length = " << Spline.length << endl;   
+
+    //cout << "Passed Find_Segment()" << endl;
     
     if(k < Spline.length){
         double X = (x - Spline.x_vals[k])/(Spline.x_vals[k+1] - Spline.x_vals[k]);
         double A = Spline.slopes[k] * (Spline.x_vals[k+1] - Spline.x_vals[k]) - (Spline.f_vals[k+1] - Spline.f_vals[k]);
         double B = -Spline.slopes[k+1] * (Spline.x_vals[k+1] - Spline.x_vals[k]) + (Spline.f_vals[k+1] - Spline.f_vals[k]);
-        
-        return (1.0 - X) * Spline.f_vals[k] + X * Spline.f_vals[k+1] + X * (1.0 - X) * (A * (1.0 - X ) + B * X);
+
+        cout << "Eval: X = " << X << " A = " << A << " B = " << B << endl;
+       	
+        //cout << "Ready to return" << endl;
+
+        double result = (1.0 - X) * Spline.f_vals[k] + X * Spline.f_vals[k+1] + X * (1.0 - X) * (A * (1.0 - X ) + B * X);
+        cout << "Eval: result = " << result << endl;
+        return result;
     } else { return 0.0;}
 }
 
@@ -306,8 +330,9 @@ double Eval_Spline_ddf(double x, struct NaturalCubicSpline_1D & Spline){
 void Spline_Single_G2S(char* file_name, char* option, SplineStruct &spline){
     SetUp_G2S_Arrays(file_name, spline);
     Load_G2S(file_name, option, spline);
-    
+ 
     spline.Temp_Spline.length = spline.r_cnt;     spline.Windu_Spline.length = spline.r_cnt;
+    //cout << "Temp Spline length " << spline.Temp_Spline.length << endl;
     spline.Windv_Spline.length = spline.r_cnt;    spline.Density_Spline.length = spline.r_cnt;
     spline.Temp_Spline.accel = spline.accel;      spline.Windu_Spline.accel = spline.accel;
     spline.Windv_Spline.accel = spline.accel;     spline.Density_Spline.accel = spline.accel;
@@ -350,7 +375,10 @@ double gamR = 0.00040187; // gamma * R in km^2/s^2 * 1/K, c(x,y,z) = sqrt(gamma*
 double c(double r, double theta, double phi, NaturalCubicSpline_1D &Temp_Spline){
     cout << "c: r_max = " << r_max << ", r_min = " << r_min << ", gamR = " << gamR << endl;
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
-    return sqrt(gamR * Eval_Spline_f(r_eval,Temp_Spline));
+    cout << "c: r_eval = " << r_eval << endl;
+    double result = sqrt(gamR * Eval_Spline_f(r_eval,Temp_Spline));
+    cout << "c: result = " << result << endl;
+    return result;
 }
 
 double c_diff(double r, double theta, double phi, int n, NaturalCubicSpline_1D &Temp_Spline){
