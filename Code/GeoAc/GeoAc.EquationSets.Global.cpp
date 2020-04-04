@@ -81,9 +81,9 @@ void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, 
     sources.src_loc[0] = r0 + r_earth;
     sources.src_loc[1] = theta0;
     sources.src_loc[2] = phi0;   
-    cout << "Before c()" << endl; 
+    //cout << "Before c()" << endl; 
     sources.c0 = c(r0 + r_earth, theta0, phi0, spl.Temp_Spline);
-    cout << "After c()" << endl;
+    //cout << "After c()" << endl;
     
     double MachComps[3] = { w(r0 + r_earth, theta0, phi0)/sources.c0,
                             v(r0 + r_earth, theta0, phi0, spl.Windv_Spline)/sources.c0,
@@ -235,10 +235,10 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
 	double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
     
 	// Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
-    cout << "C function" << endl;
-    cout << "inputs: r = " << r << ", theta = " << theta << ", phi = " << phi << endl;
+    //cout << "C function" << endl;
+    //cout << "inputs: r = " << r << ", theta = " << theta << ", phi = " << phi << endl;
     sources.c = c(r,theta,phi,spl.Temp_Spline);
-    cout << "output: sources.c = " << sources.c << endl;
+    //cout << "output: sources.c = " << sources.c << endl;
     sources.w = w(r,theta,phi);
     sources.v = v(r,theta,phi,spl.Windv_Spline);
     sources.u = u(r,theta,phi, spl.Windu_Spline);
