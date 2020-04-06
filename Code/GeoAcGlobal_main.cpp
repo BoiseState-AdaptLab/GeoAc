@@ -353,7 +353,6 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         
                           if(WriteRays && m % 25 == 0){
                               raypaths[tid] << solution[m][0] - r_earth;
-                              raypaths[tid] << '\t' << solution[m][1];
                               raypaths[tid] << '\t' << setprecision(8) << solution[m][1] * TO_DEG;
                               raypaths[tid] << '\t' << setprecision(8) << solution[m][2] * TO_DEG;
                               if(CalcAmp){    raypaths[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
