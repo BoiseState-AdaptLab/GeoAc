@@ -16,6 +16,10 @@
 #include "GeoAc/GeoAc.Interface.h"
 #include "GeoAc/GeoAc.Eigenray.h"
 
+#define PI 3.141592653589793238462643
+#define TO_RAD PI/180.0
+#define TO_DEG 180.0/PI
+
 using namespace std;
 
 void GeoAcGlobal_Usage(){ 
@@ -242,16 +246,15 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
     cout << omp_get_max_threads() << endl;
 
-    // Used to convert degrees to radians
-    const double TO_RAD = Pi/180.0;
     // Convert longitude and latitude to radians
+    cout << TO_RAD << endl;
     lat_src *= TO_RAD;
     lon_src *= TO_RAD;
     
     double*** solutions;
     solutions = (double***)malloc(sizeof(double**) * num_threads);
 
-    cout << "Got to for loop" << endl;
+    //cout << "Got to for loop" << endl;
 
     int k;
    
@@ -263,9 +266,9 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         //cout << splines.Temp_Spline.length << " = " << spline_structs[i].Temp_Spline.length << endl;
     }
 
-    cout << " Original r_vals = " << splines.r_vals[0] << endl;
+    //cout << " Original r_vals = " << splines.r_vals[0] << endl;
  
-    cout << " Copy r_vals = " << spline_structs[0].r_vals[0] << endl;
+    //cout << " Copy r_vals = " << spline_structs[0].r_vals[0] << endl;
 
     // Delete the original struct once it has been copied, we don't need it anymore
     //delete splines;
@@ -286,9 +289,9 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       //Get this thread's struct from the array
       SplineStruct splines = spline_structs[tid];
 
-      cout << "In Thread r_vals = " << splines.r_vals[0] << endl;
+      //cout << "In Thread r_vals = " << splines.r_vals[0] << endl;
 
-      cerr << "Opened thread " << tid << endl;
+      //cout << "Opened thread " << tid << endl;
 
       //struct GeoAc_Sources_Struct sources;
       // Each thread gets its own struct (see Code/GeoAc/GeoAc.EquationSets.h)
@@ -308,11 +311,11 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       const int step = phi_step;
       #pragma omp for
       for(int phi = phi_min; phi <= max_val; phi+=step){
-          cerr << "in phi for loop " << phi << tid << endl;
-          cerr << &sources << endl;
+          //cout << "in phi for loop " << phi << tid << endl;
+          //cout << &sources << endl;
           for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
             
-              cerr << "in theta for loop " << tid << endl;
+              //cout << "in theta for loop " << tid << endl;
               cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
               double GeoAc_theta = double(theta)*TO_RAD;
               double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
@@ -350,8 +353,9 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         
                           if(WriteRays && m % 25 == 0){
                               raypaths[tid] << solution[m][0] - r_earth;
-                              raypaths[tid] << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
-                              raypaths[tid] << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
+                              raypaths[tid] << '\t' << solution[m][1];
+                              raypaths[tid] << '\t' << setprecision(8) << solution[m][1] * TO_DEG;
+                              raypaths[tid] << '\t' << setprecision(8) << solution[m][2] * TO_DEG;
                               if(CalcAmp){    raypaths[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,
                                                                                           GeoAc_phi,sources, splines));}
                               else{           raypaths[tid] << '\t' << 0.0;}
@@ -361,8 +365,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         
                           if(WriteCaustics && D*D_prev < 0.0){
                               caustics[tid][bnc_cnt] << solution[m][0] - r_earth;
-                              caustics[tid][bnc_cnt] << '\t' << setprecision(8) << solution[m][1] * TO_RAD;
-                              caustics[tid][bnc_cnt] << '\t' << setprecision(8) << solution[m][2] * TO_RAD;
+                              caustics[tid][bnc_cnt] << '\t' << setprecision(8) << solution[m][1] * TO_DEG;
+                              caustics[tid][bnc_cnt] << '\t' << setprecision(8) << solution[m][2] * TO_DEG;
                               caustics[tid][bnc_cnt] << '\t' << travel_time_sum << '\n';
                           }
                           if(WriteCaustics) D_prev = D;
@@ -378,16 +382,16 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   double GC_Dist1 = pow(sin((solution[k][1] - lat_src)/2.0),2);
                   double GC_Dist2 = cos(lat_src) * cos(solution[k][1]) * pow(sin((solution[k][2] - lon_src)/2.0),2);
                 
-                  double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2], splines.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, splines.Temp_Spline) * solution[k][3]) * TO_RAD;
-                  double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * TO_RAD;
+                  double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2], splines.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, splines.Temp_Spline) * solution[k][3]) * TO_DEG;
+                  double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * TO_DEG;
                   if(back_az < -180.0) back_az +=360.0;
                   if(back_az >  180.0) back_az -=360.0;
                 
                   results[tid] << theta;
                   results[tid] << '\t' << phi;
                   results[tid] << '\t' << bnc_cnt;
-                  results[tid] << '\t' << setprecision(8) << solution[k][1] * TO_RAD;
-                  results[tid] << '\t' << setprecision(8) << solution[k][2] * TO_RAD;
+                  results[tid] << '\t' << setprecision(8) << solution[k][1] * TO_DEG;
+                  results[tid] << '\t' << setprecision(8) << solution[k][2] * TO_DEG;
                   results[tid] << '\t' << travel_time_sum;
                   results[tid] << '\t' << 2.0 * r_earth * asin(sqrt(GC_Dist1+GC_Dist2)) / travel_time_sum;
                   results[tid] << '\t' << r_max;
