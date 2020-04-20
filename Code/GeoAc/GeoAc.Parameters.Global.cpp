@@ -31,6 +31,8 @@ using namespace std;
 
 // Mathematical constants
     double Pi =  3.141592653589793238462643;
+    double TO_DEG = 180.0 / Pi;
+    double TO_RAD = Pi / 180.0;
     double gam = 1.4;
     double R =   287.05;
     double g =   9.8;

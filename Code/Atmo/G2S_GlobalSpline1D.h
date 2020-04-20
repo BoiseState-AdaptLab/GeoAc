@@ -28,6 +28,15 @@ struct NaturalCubicSpline_1D{
     double* slopes;     // Slopes used to generate natural cubic spline solution
 };
 
+#define PRINTSPLINE(s) cout << "length = " << s.length << endl;\
+cout << "accel = " << s.accel << endl;\
+cout << "x_vals | f_vals:" << endl;\
+for (int i = 0; i < s.length; i++) cout << s.x_vals[i] << " " << s.f_vals[i] << endl;\
+cout << "slopes = ";\
+for (int i = 0; i < int(sizeof(s.slopes) / sizeof(double)); i++) cout << s.slopes[i] << " ";\
+cout << endl;
+
+
 
 // Struct to contain variables that were previously global
 // Each thread gets their own
@@ -51,6 +60,21 @@ struct SplineStruct{
     struct NaturalCubicSpline_1D Windv_Spline;
     struct NaturalCubicSpline_1D Density_Spline;
 };
+
+
+#define PRINTSPLINES(s) cout << "r_cnt = " << s.r_cnt << endl;\
+cout << "accel = " << s.accel << endl;\
+cout << "r_vals | T_vals | u_vals | v_vals | rho_vals" << endl;\
+for (int i = 0; i < s.r_cnt and i < 5; i++){\
+cout << s.r_vals[i] << " " << s.T_vals[i] << " " << s.u_vals[i] << " " << s.v_vals[i] << " " << s.rho_vals[i] << endl;}\
+cout << "Temp_Spline: " << endl;\
+PRINTSPLINE(s.Temp_Spline);\
+cout << "Windu_Spline: " << endl;\
+PRINTSPLINE(s.Windu_Spline);\
+cout << "Windv_Spline: " << endl;\
+PRINTSPLINE(s.Windv_Spline);\
+cout << "Density_Spline: " << endl;\
+PRINTSPLINE(s.Density_Spline);\
 
 
 //----------------------------------------//

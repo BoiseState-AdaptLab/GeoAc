@@ -34,6 +34,8 @@ using namespace std;
 
 // Mathematical constants
     extern double   Pi;
+    extern double   TO_DEG;
+    extern double   TO_RAD;
     extern double   gam;
     extern double   R;
     extern double   g;

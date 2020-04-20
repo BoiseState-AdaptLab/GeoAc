@@ -26,6 +26,11 @@ double SuthBass_Alpha(double r, double theta, double phi, double freq, SplineStr
     double T_z, P_z, c_snd_z;
     double A1, A2, B, C, D, E, F, G, H, I, J, K, L, ZZ, hu;
     double f_vib[4], a_vib_c[4], Cp_R[4], Cv_R[4], Theta[4], C_R, A_max, Tr;
+
+    //cout << "r = " << r << " theta = " << theta << " phi = " << phi << " freq = " << freq << endl;
+    //cout << c(z_grnd,theta,phi, splines.Temp_Spline) << " C " << c(r,theta,phi, splines.Temp_Spline) << endl;
+    //cout << rho(z_grnd,theta,phi, splines.Density_Spline) << " RHO " << rho(r,theta,phi, splines.Density_Spline) << endl;
+    
     
     // Atmospheric composition constants
     mu_o  = 18.192E-6;                                                              // Reference viscosity [kg/(m*s)]
@@ -137,7 +142,7 @@ double SuthBass_Alpha(double r, double theta, double phi, double freq, SplineStr
         a_vib_c[m]   = (A_max/c_snd_z)*((2*(pow(freq,2))/f_vib[m])/(1+pow(freq/f_vib[m],2)));
         a_vib        += a_vib_c[m];
     }
-        
+
     return (a_cl + a_rot + a_diff + a_vib) * tweak_abs * 8.685889; // Output is scaled by tweak parameter and 8.685889 dB/Neper to obtain usable result in decibel per kilometer
 }
 

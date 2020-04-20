@@ -726,8 +726,8 @@ void GeoAc_SB_AttenSegment(double & atten, double ** solution, int start, int en
 		p = solution[n][2] + dp/2.0;
         
         ds = sqrt(pow(dr,2) + pow(r*dt,2) + pow(r*sin(t)*dp,2));
-
-		atten += SuthBass_Alpha(r, t, p, freq, spl)*ds;	// Add contribution to the travel time
+               
+		atten +=  SuthBass_Alpha(r, t, p, freq, spl)*ds;	// Add contribution to the travel time
 	}
 }
 
