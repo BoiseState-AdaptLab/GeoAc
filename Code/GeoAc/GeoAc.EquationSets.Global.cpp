@@ -80,11 +80,9 @@ void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, 
 				SplineStruct &spl){
     sources.src_loc[0] = r0 + r_earth;
     sources.src_loc[1] = theta0;
-    sources.src_loc[2] = phi0;   
-    //cout << "Before c()" << endl; 
+    sources.src_loc[2] = phi0;  
     sources.c0 = c(r0 + r_earth, theta0, phi0, spl.Temp_Spline);
-    //cout << "After c()" << endl;
-    
+
     double MachComps[3] = { w(r0 + r_earth, theta0, phi0)/sources.c0,
                             v(r0 + r_earth, theta0, phi0, spl.Windv_Spline)/sources.c0,
                             u(r0 + r_earth, theta0, phi0, spl.Windu_Spline)/sources.c0};
@@ -232,13 +230,10 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
 
     // Extract ray location and eikonal vector components
     double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
-	double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
+    double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
     
-	// Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
-    //cout << "C function" << endl;
-    //cout << "inputs: r = " << r << ", theta = " << theta << ", phi = " << phi << endl;
+    // Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
     sources.c = c(r,theta,phi,spl.Temp_Spline);
-    //cout << "output: sources.c = " << sources.c << endl;
     sources.w = w(r,theta,phi);
     sources.v = v(r,theta,phi,spl.Windv_Spline);
     sources.u = u(r,theta,phi, spl.Windu_Spline);
@@ -266,11 +261,6 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     sources.c_gr[2] =  sources.c*nu[2]/sources.nu_mag + sources.u;
     
     sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2));
-
-/*        for (int i = 0; i < 3; i++){
-            cout << sources.c_gr[i] << " " << nu[i] << " ";
-        }
-        cout << endl << endl;*/
     
     // Update geometric coefficients
     sources.GeoCoeff[0] = 1.0;
@@ -404,10 +394,10 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
         case(1):    // d theta / d s
         case(2):    // d phi / d s
 			result = sources.GeoCoeff[Eq_Number]*sources.c_gr[Eq_Number]/sources.c_gr_mag;
-/*                        if (isnan(result)){
-                            cout << "2: " << sources.GeoCoeff[n] << " " << sources.c_gr[n] << " ";
-                            cout << sources.c_gr_mag << endl;
-                        }*/
+//                        if (isnan(result)){
+//                            cout << "2: " << sources.GeoCoeff[n] << " " << sources.c_gr[n] << " ";
+//                            cout << sources.c_gr_mag << endl;
+//                        }
 			break;
             
 		case(3): 	// d nu_r /ds
@@ -415,11 +405,11 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number,
 		case(5): 	// d nu_phi / ds
 			result = -sources.GeoCoeff[Eq_Number-3]/sources.c_gr_mag*(sources.nu_mag*sources.dc[Eq_Number-3]
                         + nu[0]*sources.dw[Eq_Number-3] + nu[1]*sources.dv[Eq_Number-3] + nu[2]*sources.du[Eq_Number-3] + sources.GeoTerms[Eq_Number-3]);
-/*                        if (isnan(result)){
-                            cout << "5: " << sources.GeoCoeff[n-3] << " " << sources.c_gr_mag << " ";
-                            cout << sources.nu_mag << " " << sources.dv[n] << " " << sources.dw[n-3] << " ";
-                            cout << sources.du[n-3] << " " << sources.GeoTerms[n-3] << " " << nu[0] << " " << nu[1] << " " << nu[2] << endl;
-                        }*/
+//                        if (isnan(result)){
+//                            cout << "5: " << sources.GeoCoeff[n-3] << " " << sources.c_gr_mag << " ";
+//                            cout << sources.nu_mag << " " << sources.dv[n] << " " << sources.dw[n-3] << " ";
+//                            cout << sources.du[n-3] << " " << sources.GeoTerms[n-3] << " " << nu[0] << " " << nu[1] << " " << nu[2] << endl;
+//                        }
 			break;
             
             

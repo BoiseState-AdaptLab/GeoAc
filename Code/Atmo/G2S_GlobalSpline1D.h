@@ -45,7 +45,7 @@ struct SplineStruct{
     //------Parameters for Interpolation------//
     //----------------------------------------//
     int r_cnt;          // Number of vertical points
-    int accel;          // Acceleration index
+    int accel = 0;          // Acceleration index
     double* r_vals;     // r_k elements (r_cnt length)
     double* T_vals;    // Temperature at r_k
     double* u_vals;    // E-W winds at r_k

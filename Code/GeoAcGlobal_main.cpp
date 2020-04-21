@@ -128,6 +128,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     // Each thread will get its own copy
     SplineStruct splines;
     Spline_Single_G2S(inputs[2],ProfileFormat, splines); // Load profile into spline
+    //cout << sizeof(splines.Temp_Spline.x_vals) / sizeof(splines.Temp_Spline.x_vals[0]) << endl;
+
     
     for(int i = 3; i < count; i++){
         if (strncmp(inputs[i], "theta_min=",10) == 0){              theta_min = atof(inputs[i]+10);}
@@ -165,6 +167,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     }
     z_src=max(z_src,z_grnd);
     if(WriteCaustics) CalcAmp=true;
+    // This also sets GeoAc_EqCnt
     GeoAc_ConfigureCalcAmp(CalcAmp);
     
     // Extract the file name from the input and use it to distinguish the resulting output
@@ -219,8 +222,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     lat_src *= TO_RAD;
     lon_src *= TO_RAD;
     
-    double*** solutions;
-    solutions = (double***)malloc(sizeof(double**) * num_threads);
+    /*double*** solutions;
+    solutions = (double***)malloc(sizeof(double**) * num_threads);*/
 
     //cout << "Got to for loop" << endl;
   
@@ -230,6 +233,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     for (int i = 0; i < num_threads; i++){
         spline_structs[i] = splines;
         //cout << splines.Temp_Spline.length << " = " << spline_structs[i].Temp_Spline.length << endl;
+        //cout << sizeof(splines.Temp_Spline.x_vals) / sizeof(splines.Temp_Spline.x_vals[0]) << endl;
     }
 
     //cout << " Original r_vals = " << splines.r_vals[0] << endl;
@@ -250,8 +254,9 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     {
       
       int tid = omp_get_thread_num();
-      GeoAc_BuildSolutionArray(solutions[tid],length);
-      double** solution = solutions[tid];
+      /*GeoAc_BuildSolutionArray(solutions[tid],length);
+      double** solution = solutions[tid];*/
+      double* solution = new double[GeoAc_EqCnt];
 
       //Get this thread's struct from the array
       SplineStruct splines = spline_structs[tid];
@@ -288,7 +293,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               double GeoAc_theta = double(theta)*TO_RAD;
               double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
             
-              GeoAc_SetInitialConditions(solution, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources, splines);
+              double** temp = &solution;
+              GeoAc_SetInitialConditions(temp, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources, splines);
 
               //cout << "\nPrinting sources struct. Thread id: " << tid << endl;
               //PRINTSTRUCT(sources);
@@ -298,12 +304,12 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               double r_max = 0.0;
             
               for(int bnc_cnt = 0; bnc_cnt <= bounces; bnc_cnt++){
-                  k = GeoAc_Propagate_RK4_2(solution, r_max, travel_time_sum, attenuation,
-                                            GeoAc_theta, GeoAc_phi, freq, CalcAmp, sources, 
-                                            splines, WriteRays ? &(raypaths[tid]) : nullptr,
-                                            WriteCaustics ? &(caustics[tid][bnc_cnt]) : nullptr);
+                  double* final_vals = GeoAc_Propagate_RK4_2(solution, r_max, travel_time_sum, attenuation,
+                                                    GeoAc_theta, GeoAc_phi, freq, CalcAmp, sources, 
+                                                    splines, WriteRays ? &(raypaths[tid]) : nullptr,
+                                                    WriteCaustics ? &(caustics[tid][bnc_cnt]) : nullptr);
 
-                  if (k == -1) break;
+                  if (final_vals == nullptr) break;
 
                   //cerr << "in bounce for loop " << tid << endl;
                 
@@ -355,36 +361,33 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   if(BreakCheck) break;
                   for(int m = 0; m < k ; m++) r_max = max (r_max, solution[m][0] - r_earth);*/
                 
-                  double GC_Dist1 = pow(sin((solution[k][1] - lat_src)/2.0),2);
-                  double GC_Dist2 = cos(lat_src) * cos(solution[k][1]) * pow(sin((solution[k][2] - lon_src)/2.0),2);
+                  double GC_Dist1 = pow(sin((final_vals[1] - lat_src)/2.0),2);
+                  double GC_Dist2 = cos(lat_src) * cos(final_vals[1]) * pow(sin((final_vals[2] - lon_src)/2.0),2);
                 
-                  double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2], splines.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, splines.Temp_Spline) * solution[k][3]) * TO_DEG;
-                  double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * TO_DEG;
+                  double inclination = - asin(c(final_vals[0], final_vals[1], final_vals[2], splines.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, splines.Temp_Spline) * final_vals[3]) * TO_DEG;
+                  double back_az = 90.0 - atan2(-final_vals[4], -final_vals[5]) * TO_DEG;
                   if(back_az < -180.0) back_az +=360.0;
                   if(back_az >  180.0) back_az -=360.0;
  
                   results[tid] << theta;
                   results[tid] << '\t' << phi;
                   results[tid] << '\t' << bnc_cnt;
-                  results[tid] << '\t' << setprecision(8) << solution[k][1] * TO_DEG;
-                  results[tid] << '\t' << setprecision(8) << solution[k][2] * TO_DEG;
+                  results[tid] << '\t' << setprecision(8) << final_vals[1] * TO_DEG;
+                  results[tid] << '\t' << setprecision(8) << final_vals[2] * TO_DEG;
                   results[tid] << '\t' << travel_time_sum;
                   results[tid] << '\t' << 2.0 * r_earth * asin(sqrt(GC_Dist1+GC_Dist2)) / travel_time_sum;
                   results[tid] << '\t' << r_max;
                   results[tid] << '\t' << inclination;
                   results[tid] << '\t' << back_az;
-                  if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi,sources, splines));}
+                  if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(&final_vals,0,GeoAc_theta,GeoAc_phi,sources, splines));}
                   else{           results[tid] << '\t' << 0.0;}
                   results[tid] << '\t' << -attenuation;
-                  results[tid] << '\n';
-                
-                  GeoAc_SetReflectionConditions(solution,k, sources, splines);
+                  results[tid] << '\n';                
               }
               if(WriteRays){raypaths[tid] << '\n';}
-              // If there were no bounces, then we will clear nothing
-              GeoAc_ClearSolutionArray(solution,k);
           }
           results[tid] << '\n';
+          //GeoAc_ClearSolutionArray(solution, k);
       }
       // Close files for this specific thread
       raypaths[tid].close();
@@ -393,7 +396,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       for (int i = 0; i < bounces; i++){
           caustics[tid][i].close();
       }
-      GeoAc_DeleteSolutionArray(solution, length);
+      //GeoAc_DeleteSolutionArray(solution, length);
     }// End omp parallelization
 
     // Create master files to combine each thread's files into

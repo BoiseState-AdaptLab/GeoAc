@@ -216,6 +216,8 @@ int Find_Segment(double x, double* x_vals, int length, int & prev){
     bool done = false;
     
     //cout << sizeof(x_vals) / sizeof(x_vals[0])  << " " << length << endl;
+    //cout << prev<< endl;
+    //cout << "Idx " << length -1 << " = " << x_vals[length-1] << endl; 
 
     if(x > x_vals[length-1] || x < x_vals[0]){
         cout << "Cannot interpolate outside of given bounds.  x = " << x << " is invalid." << '\n';
@@ -319,7 +321,6 @@ void Spline_Single_G2S(char* file_name, char* option, SplineStruct &spline){
     Load_G2S(file_name, option, spline);
  
     spline.Temp_Spline.length = spline.r_cnt;     spline.Windu_Spline.length = spline.r_cnt;
-    //cout << "Temp Spline length " << spline.Temp_Spline.length << endl;
     spline.Windv_Spline.length = spline.r_cnt;    spline.Density_Spline.length = spline.r_cnt;
     spline.Temp_Spline.accel = spline.accel;      spline.Windu_Spline.accel = spline.accel;
     spline.Windv_Spline.accel = spline.accel;     spline.Density_Spline.accel = spline.accel;
@@ -331,9 +332,9 @@ void Spline_Single_G2S(char* file_name, char* option, SplineStruct &spline){
     
     BuildSlopeArray(spline.Temp_Spline);       BuildSlopeArray(spline.Windu_Spline); 
     BuildSlopeArray(spline.Density_Spline);    BuildSlopeArray(spline.Windv_Spline);
-    
-    Set_Slopes(spline.Temp_Spline);            Set_Slopes(spline.Windu_Spline);
-    Set_Slopes(spline.Density_Spline);         Set_Slopes(spline.Windv_Spline);
+
+     Set_Slopes(spline.Temp_Spline);           Set_Slopes(spline.Windu_Spline);
+     Set_Slopes(spline.Density_Spline);        Set_Slopes(spline.Windv_Spline);
 }
 
 void ClearAll(SplineStruct &spline){
