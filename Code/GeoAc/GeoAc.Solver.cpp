@@ -38,7 +38,7 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
                 for (int i = 0; i < GeoAc_EqCnt; i++){
                         temp1[i] = ds*GeoAc_EvalSrcEq(s, temp0, i, sources);
                         partial1[i] = solution[k][i] + temp1[i]/2.0;
-                }        	
+                }                
 
                        GeoAc_UpdateSources(s + ds/2, partial1, sources, splines);
                 for (int i = 0; i < GeoAc_EqCnt; i++){
@@ -110,8 +110,8 @@ int GeoAc_Propagate_RK4_2(double ** & solution, double& r_max, double& travel_ti
     double *partial1 = new double [GeoAc_EqCnt];        double *partial2 = new double [GeoAc_EqCnt];
     double *partial3 = new double [GeoAc_EqCnt];
 
-    // Variables used to calculate the increase in travel time every iteration
-    double dr, dt, dp, tt_ds, r, t, p, nu[3], nu_mag, c_prop[3], c_prop_mag;
+    // Variables used to calculate the increase in travel time and attenuation every iteration
+    double dr, dt, dp, ds_, r, t, p, nu[3], nu_mag, c_prop[3], c_prop_mag;
  
     // Create a copy of r_max because if Break_Check() is triggered, r_max shouldn't change
     double r_max_cpy = max(r_max, solution[0][0] - r_earth);
@@ -171,8 +171,11 @@ int GeoAc_Propagate_RK4_2(double ** & solution, double& r_max, double& travel_ti
             break;
         }
 
-        // Calculate increase in travel time
-        //GeoAc_TravelTimeSegment(travel_time, solution, k, k+1, splines);
+        // Calculate increase in travel time and attenuation
+
+        /*GeoAc_TravelTimeSegment(travel_time, solution, k, k+1, splines);
+        GeoAc_SB_AttenSegment(attenuation, solution, k, k+1, freq, splines);*/
+
         // Calculate ds = sqrt(dr^2 + r^2 dt^2 + r^2 + cos(t)^2 + dp^2)
         dr = solution[k+1][0] - solution[k][0];
         dt = solution[k+1][1] - solution[k][1];
@@ -181,7 +184,7 @@ int GeoAc_Propagate_RK4_2(double ** & solution, double& r_max, double& travel_ti
         r = solution[k][0] + dr/2.0;
         t = solution[k][1] + dt/2.0;
         p = solution[k][2] + dp/2.0;
-        tt_ds = sqrt(pow(dr,2) + pow(r*dt,2) + pow(r*cos(t)*dp,2));
+        ds_ = sqrt(pow(dr,2) + pow(r*dt,2) + pow(r*cos(t)*dp,2));
         // Calculate |c_prop|
         nu[0] = solution[k][3] + (solution[k+1][3] - solution[k][3])/2.0;
         nu[1] = solution[k][4] + (solution[k+1][4] - solution[k][4])/2.0;
@@ -193,11 +196,13 @@ int GeoAc_Propagate_RK4_2(double ** & solution, double& r_max, double& travel_ti
         c_prop[2] = c(r,t,p,splines.Temp_Spline) * nu[2]/nu_mag + u(r,t,p,splines.Windu_Spline);
         c_prop_mag = sqrt(pow(c_prop[0],2) + pow(c_prop[1],2) + pow(c_prop[2],2));
         // Add contribution to the travel time
-        travel_time += tt_ds/c_prop_mag;
-         
-        // Calculate increase in attenuation    
-        GeoAc_SB_AttenSegment(attenuation, solution, k, k+1, freq, splines);            
+        travel_time += ds_/c_prop_mag;
 
+        // Calculate ds = sqrt(dr^2 + r^2 dt^2 + r^2 + sin(t)^2 + dp^2)
+        ds_ = sqrt(pow(dr,2) + pow(r*dt,2) + pow(r*sin(t)*dp,2));
+        // Add contibution to the attenuation
+        attenuation += SuthBass_Alpha(r, t, p, freq, splines)*ds_;
+         
         // Write to files
         if(WriteRays || WriteCaustics){
             // If this is the first iteration, set D_prev
