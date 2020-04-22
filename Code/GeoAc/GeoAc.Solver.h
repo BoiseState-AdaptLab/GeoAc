@@ -9,15 +9,30 @@
 using namespace std;
 
 int GeoAc_Propagate_RK4(double ** &, bool &, GeoAc_Sources_Struct&, SplineStruct&);
-// Parameters: double *& - initial conditions
-//             double& X3 - r_max, travel_time, attenuation
-//             double X3 - GeoAc_theta, GeoAc_phi, freq
-//             bool - CalcAmp
-//             struct X2 - sources & splines structs
-//             ofstream* X2 - pointers to the results and caustics ofstreams. These can be null pointers
-// Returns: The last row in solution that we filled
-double* GeoAc_Propagate_RK4_2(double * &, double&, double&, double&, double, double, double, bool,
-                          GeoAc_Sources_Struct&, SplineStruct&, ofstream*, ofstream*);
+
+/**
+ * Modified version of the GeoAc_Propagate_RK4() function
+ *
+ * @param double*& 			The initial conditions
+ * @param double& 			r_max
+ * @param double& 			travel_time
+ * @param double& 			attenuation
+ * @param double 			GeoAc_theta
+ * @param double 			GeoAc_phi
+ * @param double 			freq
+ * @param bool 				CalcAmp
+ * @param GeoAc_Sources_Struct&		GeoAc_Sources struct
+ * @param SplineStruct&			SplineStruct struct
+ * @param ofstream* 			results ofstream
+ * @param ofstream* 			caustics ofstream
+ *
+ * @return double* The last row of the solution that was filled
+ *
+ */
+double* GeoAc_Propagate_RK4_2(double*&, double&, double&, double&, 
+				double, double, double, bool, 
+				GeoAc_Sources_Struct&, SplineStruct&, 
+				ofstream*, ofstream*);
 
 
 #endif /* GEOAC_SOLVER_H_ */

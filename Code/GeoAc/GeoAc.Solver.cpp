@@ -13,9 +13,15 @@
 using namespace std;
 
 int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct &sources, SplineStruct &splines){
-        int k = 0;                                                      // Integer to track ending index of solution
-        int step_limit = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10));        // Limiting number of steps, defined by limiting ray length divided by step size (length/step)
-        double s = 0, ds = GeoAc_ds_min;                                // Current ray length and (variable) ray length step
+        
+	int k = 0;	// Integer to track ending index of solution
+
+	// Limiting number of steps, 
+	// defined by limiting ray length divided by step size (length/step)
+        int step_limit = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10));        
+        
+	// Current ray length and (variable) ray length step
+	double s = 0, ds = GeoAc_ds_min;                                
 
         double *temp0 = new double [GeoAc_EqCnt];                double *temp1 = new double [GeoAc_EqCnt];
         double *temp2 = new double [GeoAc_EqCnt];                double *temp3 = new double [GeoAc_EqCnt];
@@ -96,12 +102,23 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
         return k+1;
 }
 
-double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max, double& travel_time, double& attenuation,
-                          double GeoAc_theta, double GeoAc_phi, double freq, bool CalcAmp, GeoAc_Sources_Struct &sources,
-                          SplineStruct &splines, ofstream* raypaths, ofstream* caustics){
-   int k = 0;                                                      // Integer to track ending index of solution
-   int step_limit = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10)); // Limiting number of steps, defined by limiting ray length divided by step size (length/step)
-    double s = 0, ds = GeoAc_ds_min;                               // Current ray length and (variable) ray length step
+
+double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max, 
+				double& travel_time, double& attenuation, 
+				double GeoAc_theta, double GeoAc_phi, 
+				double freq, bool CalcAmp, 
+				GeoAc_Sources_Struct &sources, 
+				SplineStruct &splines, 
+				ofstream* raypaths, ofstream* caustics){
+
+    int k = 0;	// Integer to track ending index of solution
+
+    // Limiting number of steps, 
+    // defined by limiting ray length divided by step size (length/step)
+    int step_limit = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10)); 
+    
+    // Current ray length and (variable) ray length step
+    double s = 0, ds = GeoAc_ds_min; 
 
     double *temp0 = new double [GeoAc_EqCnt];                double *temp1 = new double [GeoAc_EqCnt];
     double *temp2 = new double [GeoAc_EqCnt];                double *temp3 = new double [GeoAc_EqCnt];
@@ -113,6 +130,7 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max, double& travel_
     // Solution is used to store one set of values in the past, used after the loop (k-1)
     // Stores the next set of values, calculated from our current set (k+1)
     double* next = new double[GeoAc_EqCnt];
+    
     // Stores our current set of values, used to calculate the next set (k)
     double* current = new double[GeoAc_EqCnt];
     for (int i = 0; i < GeoAc_EqCnt; i++) current[i] = solution[i];
