@@ -7,6 +7,9 @@
 #include "GeoAc.Parameters.h"
 #include "Atmo_State.h"
 
+// Add this include to get access to GeoAc_Sources_Struct
+#include "GeoAc.EquationSets.h"
+
 using namespace std;
 
 //--------------------------------------------------//
@@ -17,78 +20,25 @@ void GeoAc_SetSystem(){
     GeoAc_AtmoStrat = false;     // Is the medium stratified?
 }
 
-//-----------------------------------------------------------//
-//-------Structure containing source functions which are-----//
-//-------called multiple times in the solver-----------------//
-//-----------------------------------------------------------//
-struct GeoAc_Sources_Struct{
-
-    double src_loc[3];  // Location of the source (r, theta, phi)
-	double c0;			// Thermodynamic sound speed at source 
-
-	double c;			// Thermodynamic sound speed
-	double dc[5];		// Dc_r, Dc_t, Dc_p, dc_lt, dc_lp (derivatives with respect to radius, theta, phi, launch theta, launch phi)
-	double ddc[3][2];	// ddc_rlt, ddc_rlp; ddc_tlt, ddc_tlp; ddc_plt, ddc_plp (derivatives with respect to r and lt, r and lp; etc.)
-    
-	double w;			// Vertical wind speed (r component, positive values upward)
-	double dw[5];		// dw_r, dw_t, dw_p, dw_lt, dw_lp
-    double ddw[3][2];	// ddw_rlt, ddw_rlp; ddw_tlt, ddw_tlp; ddw_plt, ddw_plp
-    
-	double v;			// N-S wind speed (theta component, positive values toward south pole)
-	double dv[5];		// dv_r, dv_t, dv_p, dv_lt, dv_lp
-    double ddv[3][2];	// ddv_rlt, ddv_rlp; ddv_tlt, ddv_tlp; ddv_plt, ddv_plp
-    
-	double u;			// E-W wind speed (phi component, positive values to the west)
-	double du[5];		// du_r, du_t, du_p, du_lt, du_lp
-    double ddu[3][2];	// ddu_rlt, ddu_rlp; ddu_tlt, ddu_tlp; ddu_plt, ddu_plp
-    
-    double nu0;         // Eikonal vector magnitude at the source
-    double nu_mag;		// Eikonal vector magnitude
-	double dnu_mag[2];	// Derivative of |nu| with respect to lt, lp
-
-	double c_gr[3];         // Group velocity cg = c {nu_x,nu_y,nu_z}/|nu} + {u,v,w}
-	double c_gr_mag;        // Group velocity magnitude |cp| = c sqrt(1 + 2 nu/|nu| dot v/c + v^2/c^2)
-    double dc_gr[3][2];     // Derivatives of c_gr components with respect to lt and lp
-	double dc_gr_mag[2];	// Derivatives of c_gr magnitude with respect to lt and lp
-    
-    double GeoCoeff[3];         // Scalar coefficients for coordiante transformation (spherical -> 1.0, 1.0/r, 1.0/(r*sin(theta)))
-    double d_GeoCoeff[3][2];    // Angular derivatives of the coefficients for a coordiante transformation
-    
-    double GeoTerms[3];         // Extra terms which keep the eikonal vector direction constant as the unit vectors vary with position
-    double d_GeoTerms[3][2];    // Angular derivatives of the extra terms keeping the eikonal vector direction constant
-};
-
-struct GeoAc_Sources_Struct GeoAc_Sources = {
-    {0.0, 0.0, 0.0}, 0.0,
-    0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
-    0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
-    0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
-    0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
-    0.0, 0.0, {0.0, 0.0},
-    {0.0, 0.0, 0.0}, 0.0, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}}, {0.0, 0.0},
-    {0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
-    {0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}}
-};
-
 //----------------------------------------------------------------------//
 //-------Fill in solution[0][n] with the appropriate initial values-----//
 //----------------------------------------------------------------------//
-// Modified to pass in GeoAc_ angles
+// Modified to pass in GeoAc_ angles and GeoAc_Sources_Struct
 void GeoAc_SetInitialConditions(double ** & solution, double r0, double theta0, double phi0,
-                                double GeoAc_theta, double GeoAc_phi){
-    GeoAc_Sources.src_loc[0] = r0 + r_earth;
-    GeoAc_Sources.src_loc[1] = theta0;
-    GeoAc_Sources.src_loc[2] = phi0;    
-	GeoAc_Sources.c0 = c(r0 + r_earth, theta0, phi0);
+                                double GeoAc_theta, double GeoAc_phi, GeoAc_Sources_Struct &sources){
+    sources.src_loc[0] = r0 + r_earth;
+    sources.src_loc[1] = theta0;
+    sources.src_loc[2] = phi0;    
+	sources.c0 = c(r0 + r_earth, theta0, phi0);
     
-    double MachComps[3] = { w(r0 + r_earth, theta0, phi0)/GeoAc_Sources.c0,
-                            v(r0 + r_earth, theta0, phi0)/GeoAc_Sources.c0,
-                            u(r0 + r_earth, theta0, phi0)/GeoAc_Sources.c0};
+    double MachComps[3] = { w(r0 + r_earth, theta0, phi0)/sources.c0,
+                            v(r0 + r_earth, theta0, phi0)/sources.c0,
+                            u(r0 + r_earth, theta0, phi0)/sources.c0};
     double nu0[3] =    {sin(GeoAc_theta),  cos(GeoAc_theta)*sin(GeoAc_phi),    cos(GeoAc_theta)*cos(GeoAc_phi)};
     double mu0_lt[3] = {cos(GeoAc_theta), -sin(GeoAc_theta)*sin(GeoAc_phi),   -sin(GeoAc_theta)*cos(GeoAc_phi)};
     double mu0_lp[3] = {0.0,               cos(GeoAc_theta)*cos(GeoAc_phi),   -cos(GeoAc_theta)*sin(GeoAc_phi)};
     double MachScalar = 1.0 + (nu0[0]*MachComps[0] + nu0[1]*MachComps[1] + nu0[2]*MachComps[2]);
-    GeoAc_Sources.nu0 = 1.0/MachScalar;
+    sources.nu0 = 1.0/MachScalar;
     
 	for(int index = 0; index < GeoAc_EqCnt; index++){
 		switch(index){
@@ -153,12 +103,13 @@ void GeoAc_ApproximateIntercept(double ** solution, int k, double* & prev){
 //-------------------------------------------------------------------------//
 //-------Fill in solution[0][n] with the appropriate reflection values-----//
 //-------------------------------------------------------------------------//
-void GeoAc_SetReflectionConditions(double** & solution, int k_end){
+// Modified to pass in GeoAc_Sources_Struct by reference
+void GeoAc_SetReflectionConditions(double** & solution, int k_end, GeoAc_Sources_Struct &sources){
 	double* prev = new double [GeoAc_EqCnt];
 	GeoAc_ApproximateIntercept(solution, k_end, prev);
     
     double c_ref = c(prev[0], prev[1], prev[2]);
-	double dnu_r_ds = - 1.0/c_ref * (GeoAc_Sources.c0/c_ref * c_diff(prev[0],prev[1],prev[2],0)
+	double dnu_r_ds = - 1.0/c_ref * (sources.c0/c_ref * c_diff(prev[0],prev[1],prev[2],0)
                                                          + prev[3] * w_diff(prev[0],prev[1],prev[2],0)
                                                             + prev[4] * v_diff(prev[0],prev[1],prev[2],0)
                                                                 + prev[5] * u_diff(prev[0],prev[1],prev[2],0)
@@ -199,7 +150,7 @@ void GeoAc_SetReflectionConditions(double** & solution, int k_end){
                 
             case(9):			// mu_r_lt(s0+) = 	-mu_r_lt(s0-) + 2 d nu_r/ds * ds0/dlt
             case(15):			// mu_r_lp(s0+) = 	mu_r_lp(s0-)  2 d nu_r/ds * sd0/dlp
-                solution[0][index] =  -prev[index] + 2.0*dnu_r_ds * prev[index - 3]/(c_ref / GeoAc_Sources.c0 * prev[3]);
+                solution[0][index] =  -prev[index] + 2.0*dnu_r_ds * prev[index - 3]/(c_ref / sources.c0 * prev[3]);
                 break;       
         }
 	}
@@ -221,54 +172,55 @@ double GeoAc_Set_ds(double* current_values){
 //---------------------------------------//
 //-------Update the source functions-----//
 //---------------------------------------//
-void GeoAc_UpdateSources(double ray_length, double* current_values){
+// Modified to pass in GeoAc_Sources_Struct by reference
+void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Sources_Struct &sources){
     // Extract ray location and eikonal vector components
     double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
 	double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
     
 	// Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
-    GeoAc_Sources.c = c(r,theta,phi);
-    GeoAc_Sources.w = w(r,theta,phi);
-    GeoAc_Sources.v = v(r,theta,phi);
-    GeoAc_Sources.u = u(r,theta,phi);
+    sources.c = c(r,theta,phi);
+    sources.w = w(r,theta,phi);
+    sources.v = v(r,theta,phi);
+    sources.u = u(r,theta,phi);
     
-    GeoAc_Sources.dc[0] = c_diff(r,theta,phi,0);
-    GeoAc_Sources.dw[0] = w_diff(r,theta,phi,0);
-    GeoAc_Sources.dv[0] = v_diff(r,theta,phi,0);
-    GeoAc_Sources.du[0] = u_diff(r,theta,phi,0);
+    sources.dc[0] = c_diff(r,theta,phi,0);
+    sources.dw[0] = w_diff(r,theta,phi,0);
+    sources.dv[0] = v_diff(r,theta,phi,0);
+    sources.du[0] = u_diff(r,theta,phi,0);
     
-    GeoAc_Sources.dc[1] = c_diff(r,theta,phi,1);
-    GeoAc_Sources.dw[1] = w_diff(r,theta,phi,1);
-    GeoAc_Sources.dv[1] = v_diff(r,theta,phi,1);
-    GeoAc_Sources.du[1] = u_diff(r,theta,phi,1);
+    sources.dc[1] = c_diff(r,theta,phi,1);
+    sources.dw[1] = w_diff(r,theta,phi,1);
+    sources.dv[1] = v_diff(r,theta,phi,1);
+    sources.du[1] = u_diff(r,theta,phi,1);
     
-    GeoAc_Sources.dc[2] = c_diff(r,theta,phi,2);
-    GeoAc_Sources.dw[2] = w_diff(r,theta,phi,2);
-    GeoAc_Sources.dv[2] = v_diff(r,theta,phi,2);
-    GeoAc_Sources.du[2] = u_diff(r,theta,phi,2);
+    sources.dc[2] = c_diff(r,theta,phi,2);
+    sources.dw[2] = w_diff(r,theta,phi,2);
+    sources.dv[2] = v_diff(r,theta,phi,2);
+    sources.du[2] = u_diff(r,theta,phi,2);
     
     // Update Eikonal vector magnitude and group velocity
-    GeoAc_Sources.nu_mag = 	 sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
+    sources.nu_mag = 	 sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
 
-    GeoAc_Sources.c_gr[0] =  GeoAc_Sources.c*nu[0]/GeoAc_Sources.nu_mag + GeoAc_Sources.w;
-    GeoAc_Sources.c_gr[1] =  GeoAc_Sources.c*nu[1]/GeoAc_Sources.nu_mag + GeoAc_Sources.v;
-    GeoAc_Sources.c_gr[2] =  GeoAc_Sources.c*nu[2]/GeoAc_Sources.nu_mag + GeoAc_Sources.u;
+    sources.c_gr[0] =  sources.c*nu[0]/sources.nu_mag + sources.w;
+    sources.c_gr[1] =  sources.c*nu[1]/sources.nu_mag + sources.v;
+    sources.c_gr[2] =  sources.c*nu[2]/sources.nu_mag + sources.u;
     
-    GeoAc_Sources.c_gr_mag = sqrt(pow(GeoAc_Sources.c_gr[0],2) + pow(GeoAc_Sources.c_gr[1],2) + pow(GeoAc_Sources.c_gr[2],2));
+    sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2));
     
     // Update geometric coefficients
-    GeoAc_Sources.GeoCoeff[0] = 1.0;
-    GeoAc_Sources.GeoCoeff[1] = 1.0/r;
-    GeoAc_Sources.GeoCoeff[2] = 1.0/(r*cos(theta));
+    sources.GeoCoeff[0] = 1.0;
+    sources.GeoCoeff[1] = 1.0/r;
+    sources.GeoCoeff[2] = 1.0/(r*cos(theta));
     
     // Update Eikonal geometric terms
-    GeoAc_Sources.GeoTerms[0] = 0.0;
-    GeoAc_Sources.GeoTerms[1] = (nu[0]*GeoAc_Sources.v - nu[1]*GeoAc_Sources.w);
-    GeoAc_Sources.GeoTerms[2] = (nu[0]*GeoAc_Sources.u - nu[2]*GeoAc_Sources.w)*cos(theta) + (nu[1]*GeoAc_Sources.u - nu[2]*GeoAc_Sources.v)*sin(theta);
+    sources.GeoTerms[0] = 0.0;
+    sources.GeoTerms[1] = (nu[0]*sources.v - nu[1]*sources.w);
+    sources.GeoTerms[2] = (nu[0]*sources.u - nu[2]*sources.w)*cos(theta) + (nu[1]*sources.u - nu[2]*sources.v)*sin(theta);
     
-    GeoAc_Sources.GeoTerms[0] += 1.0/r * (nu[1]*GeoAc_Sources.c_gr[1] + nu[2]*GeoAc_Sources.c_gr[2]);
-    GeoAc_Sources.GeoTerms[1] += -nu[0]*GeoAc_Sources.c_gr[1] + nu[2]*GeoAc_Sources.c_gr[2]*tan(theta);
-    GeoAc_Sources.GeoTerms[2] += -GeoAc_Sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta));
+    sources.GeoTerms[0] += 1.0/r * (nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2]);
+    sources.GeoTerms[1] += -nu[0]*sources.c_gr[1] + nu[2]*sources.c_gr[2]*tan(theta);
+    sources.GeoTerms[2] += -sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta));
     
     
     // The following code is only used if amplitudes are to be calculated; the above results are sufficient for producing ray geometry
@@ -281,99 +233,100 @@ void GeoAc_UpdateSources(double ray_length, double* current_values){
 		mu_lp[0] = current_values[15];		mu_lp[1] = current_values[16];		mu_lp[2] = current_values[17];
         
         // Update lt, lp, and second order derivatives of sound speed and winds
-        GeoAc_Sources.dc[3] = 0.0;  GeoAc_Sources.dc[4] = 0.0;
-        GeoAc_Sources.dw[3] = 0.0;  GeoAc_Sources.dw[4] = 0.0;
-        GeoAc_Sources.dv[3] = 0.0;  GeoAc_Sources.dv[4] = 0.0;
-        GeoAc_Sources.du[3] = 0.0;  GeoAc_Sources.du[4] = 0.0;
+        sources.dc[3] = 0.0;  sources.dc[4] = 0.0;
+        sources.dw[3] = 0.0;  sources.dw[4] = 0.0;
+        sources.dv[3] = 0.0;  sources.dv[4] = 0.0;
+        sources.du[3] = 0.0;  sources.du[4] = 0.0;
 
         for(int n = 0; n < 3; n++){
-            GeoAc_Sources.ddc[n][0] = 0.0;
-            GeoAc_Sources.ddw[n][0] = 0.0;
-            GeoAc_Sources.ddv[n][0] = 0.0;
-            GeoAc_Sources.ddu[n][0] = 0.0;
+            sources.ddc[n][0] = 0.0;
+            sources.ddw[n][0] = 0.0;
+            sources.ddv[n][0] = 0.0;
+            sources.ddu[n][0] = 0.0;
             
-            GeoAc_Sources.ddc[n][1] = 0.0;
-            GeoAc_Sources.ddw[n][1] = 0.0;
-            GeoAc_Sources.ddv[n][1] = 0.0;
-            GeoAc_Sources.ddu[n][1] = 0.0;
+            sources.ddc[n][1] = 0.0;
+            sources.ddw[n][1] = 0.0;
+            sources.ddv[n][1] = 0.0;
+            sources.ddu[n][1] = 0.0;
         }
 
         
         for(int n = 0; n < 3; n++){
-            GeoAc_Sources.dc[3] += R_lt[n]*c_diff(r,theta,phi,n);
-            GeoAc_Sources.dw[3] += R_lt[n]*w_diff(r,theta,phi,n);
-            GeoAc_Sources.dv[3] += R_lt[n]*v_diff(r,theta,phi,n);
-            GeoAc_Sources.du[3] += R_lt[n]*u_diff(r,theta,phi,n);
+            sources.dc[3] += R_lt[n]*c_diff(r,theta,phi,n);
+            sources.dw[3] += R_lt[n]*w_diff(r,theta,phi,n);
+            sources.dv[3] += R_lt[n]*v_diff(r,theta,phi,n);
+            sources.du[3] += R_lt[n]*u_diff(r,theta,phi,n);
             
-            GeoAc_Sources.dc[4] += R_lp[n]*c_diff(r,theta,phi,n);
-            GeoAc_Sources.dw[4] += R_lp[n]*w_diff(r,theta,phi,n);
-            GeoAc_Sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n);
-            GeoAc_Sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n);
+            sources.dc[4] += R_lp[n]*c_diff(r,theta,phi,n);
+            sources.dw[4] += R_lp[n]*w_diff(r,theta,phi,n);
+            sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n);
+            sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n);
             
             for(int m = 0; m < 3; m++){
-                GeoAc_Sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n);
-                GeoAc_Sources.ddw[m][0] += R_lt[n]*w_ddiff(r, theta, phi, m, n);
-                GeoAc_Sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n);
-                GeoAc_Sources.ddu[m][0] += R_lt[n]*u_ddiff(r, theta, phi, m, n);
+                sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n);
+                sources.ddw[m][0] += R_lt[n]*w_ddiff(r, theta, phi, m, n);
+                sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n);
+                sources.ddu[m][0] += R_lt[n]*u_ddiff(r, theta, phi, m, n);
 
-                GeoAc_Sources.ddc[m][1] += R_lp[n]*c_ddiff(r, theta, phi, m, n);
-                GeoAc_Sources.ddw[m][1] += R_lp[n]*w_ddiff(r, theta, phi, m, n);
-                GeoAc_Sources.ddv[m][1] += R_lp[n]*v_ddiff(r, theta, phi, m, n);
-                GeoAc_Sources.ddu[m][1] += R_lp[n]*u_ddiff(r, theta, phi, m, n);
+                sources.ddc[m][1] += R_lp[n]*c_ddiff(r, theta, phi, m, n);
+                sources.ddw[m][1] += R_lp[n]*w_ddiff(r, theta, phi, m, n);
+                sources.ddv[m][1] += R_lp[n]*v_ddiff(r, theta, phi, m, n);
+                sources.ddu[m][1] += R_lp[n]*u_ddiff(r, theta, phi, m, n);
             }
         }
         
         // Update lt and lp derivatives of eikonal vector magnitude
-		GeoAc_Sources.dnu_mag[0] = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/GeoAc_Sources.nu_mag;
-		GeoAc_Sources.dnu_mag[1] = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/GeoAc_Sources.nu_mag;
+		sources.dnu_mag[0] = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/sources.nu_mag;
+		sources.dnu_mag[1] = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/sources.nu_mag;
         
 
 		// Update lt and lp derivatives of group velocity
-        GeoAc_Sources.dc_gr[0][0] = nu[0]/GeoAc_Sources.nu_mag*GeoAc_Sources.dc[3] + GeoAc_Sources.c*mu_lt[0]/GeoAc_Sources.nu_mag - GeoAc_Sources.c*nu[0]/pow(GeoAc_Sources.nu_mag,2) * GeoAc_Sources.dnu_mag[0] + GeoAc_Sources.dw[3];
-        GeoAc_Sources.dc_gr[1][0] = nu[1]/GeoAc_Sources.nu_mag*GeoAc_Sources.dc[3] + GeoAc_Sources.c*mu_lt[1]/GeoAc_Sources.nu_mag - GeoAc_Sources.c*nu[1]/pow(GeoAc_Sources.nu_mag,2) * GeoAc_Sources.dnu_mag[0] + GeoAc_Sources.dv[3];
-        GeoAc_Sources.dc_gr[2][0] = nu[2]/GeoAc_Sources.nu_mag*GeoAc_Sources.dc[3] + GeoAc_Sources.c*mu_lt[2]/GeoAc_Sources.nu_mag - GeoAc_Sources.c*nu[2]/pow(GeoAc_Sources.nu_mag,2) * GeoAc_Sources.dnu_mag[0] + GeoAc_Sources.du[3];
+        sources.dc_gr[0][0] = nu[0]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dw[3];
+        sources.dc_gr[1][0] = nu[1]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dv[3];
+        sources.dc_gr[2][0] = nu[2]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.du[3];
         
-        GeoAc_Sources.dc_gr[0][1] = nu[0]/GeoAc_Sources.nu_mag*GeoAc_Sources.dc[4] + GeoAc_Sources.c*mu_lp[0]/GeoAc_Sources.nu_mag - GeoAc_Sources.c*nu[0]/pow(GeoAc_Sources.nu_mag,2) * GeoAc_Sources.dnu_mag[1] + GeoAc_Sources.dw[4];
-        GeoAc_Sources.dc_gr[1][1] = nu[1]/GeoAc_Sources.nu_mag*GeoAc_Sources.dc[4] + GeoAc_Sources.c*mu_lp[1]/GeoAc_Sources.nu_mag - GeoAc_Sources.c*nu[1]/pow(GeoAc_Sources.nu_mag,2) * GeoAc_Sources.dnu_mag[1] + GeoAc_Sources.dv[4];
-        GeoAc_Sources.dc_gr[2][1] = nu[2]/GeoAc_Sources.nu_mag*GeoAc_Sources.dc[4] + GeoAc_Sources.c*mu_lp[2]/GeoAc_Sources.nu_mag - GeoAc_Sources.c*nu[2]/pow(GeoAc_Sources.nu_mag,2) * GeoAc_Sources.dnu_mag[1] + GeoAc_Sources.du[4];
+        sources.dc_gr[0][1] = nu[0]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dw[4];
+        sources.dc_gr[1][1] = nu[1]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dv[4];
+        sources.dc_gr[2][1] = nu[2]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.du[4];
 
-        GeoAc_Sources.dc_gr_mag[0] = (GeoAc_Sources.c_gr[0]*GeoAc_Sources.dc_gr[0][0] + GeoAc_Sources.c_gr[1]*GeoAc_Sources.dc_gr[1][0] + GeoAc_Sources.c_gr[2]*GeoAc_Sources.dc_gr[2][0])/GeoAc_Sources.c_gr_mag;
-        GeoAc_Sources.dc_gr_mag[1] = (GeoAc_Sources.c_gr[0]*GeoAc_Sources.dc_gr[0][1] + GeoAc_Sources.c_gr[1]*GeoAc_Sources.dc_gr[1][1] + GeoAc_Sources.c_gr[2]*GeoAc_Sources.dc_gr[2][1])/GeoAc_Sources.c_gr_mag;
+        sources.dc_gr_mag[0] = (sources.c_gr[0]*sources.dc_gr[0][0] + sources.c_gr[1]*sources.dc_gr[1][0] + sources.c_gr[2]*sources.dc_gr[2][0])/sources.c_gr_mag;
+        sources.dc_gr_mag[1] = (sources.c_gr[0]*sources.dc_gr[0][1] + sources.c_gr[1]*sources.dc_gr[1][1] + sources.c_gr[2]*sources.dc_gr[2][1])/sources.c_gr_mag;
 
-        GeoAc_Sources.d_GeoCoeff[0][0] = 0.0;
-        GeoAc_Sources.d_GeoCoeff[1][0] = -R_lt[0]/(pow(r,2));
-        GeoAc_Sources.d_GeoCoeff[2][0] = -R_lt[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lt[1];
+        sources.d_GeoCoeff[0][0] = 0.0;
+        sources.d_GeoCoeff[1][0] = -R_lt[0]/(pow(r,2));
+        sources.d_GeoCoeff[2][0] = -R_lt[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lt[1];
  
-        GeoAc_Sources.d_GeoCoeff[0][1] = 0.0;
-        GeoAc_Sources.d_GeoCoeff[1][1] = -R_lp[0]/(pow(r,2));
-        GeoAc_Sources.d_GeoCoeff[2][1] = -R_lp[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lp[1];
+        sources.d_GeoCoeff[0][1] = 0.0;
+        sources.d_GeoCoeff[1][1] = -R_lp[0]/(pow(r,2));
+        sources.d_GeoCoeff[2][1] = -R_lp[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lp[1];
         
-        GeoAc_Sources.d_GeoTerms[0][0] = 0.0;
-        GeoAc_Sources.d_GeoTerms[1][0] = (mu_lt[0]*GeoAc_Sources.v + nu[0]*GeoAc_Sources.dv[3] - mu_lt[1]*GeoAc_Sources.w - nu[1] * GeoAc_Sources.dw[3]);
-        GeoAc_Sources.d_GeoTerms[2][0] = (mu_lt[0]*GeoAc_Sources.u + nu[0]*GeoAc_Sources.du[3] - mu_lt[2]*GeoAc_Sources.w - nu[2] * GeoAc_Sources.dw[3])*cos(theta) - (nu[0]*GeoAc_Sources.u - nu[2]*GeoAc_Sources.w)*R_lt[1]*sin(theta)
-                                            + (mu_lt[1]*GeoAc_Sources.u + nu[1]*GeoAc_Sources.du[3] - mu_lt[2]*GeoAc_Sources.v - nu[2] * GeoAc_Sources.dv[3])*sin(theta) + (nu[1]*GeoAc_Sources.u - nu[2]*GeoAc_Sources.v)*R_lt[1]*cos(theta);
+        sources.d_GeoTerms[0][0] = 0.0;
+        sources.d_GeoTerms[1][0] = (mu_lt[0]*sources.v + nu[0]*sources.dv[3] - mu_lt[1]*sources.w - nu[1] * sources.dw[3]);
+        sources.d_GeoTerms[2][0] = (mu_lt[0]*sources.u + nu[0]*sources.du[3] - mu_lt[2]*sources.w - nu[2] * sources.dw[3])*cos(theta) - (nu[0]*sources.u - nu[2]*sources.w)*R_lt[1]*sin(theta)
+                                            + (mu_lt[1]*sources.u + nu[1]*sources.du[3] - mu_lt[2]*sources.v - nu[2] * sources.dv[3])*sin(theta) + (nu[1]*sources.u - nu[2]*sources.v)*R_lt[1]*cos(theta);
         
-        GeoAc_Sources.d_GeoTerms[0][0] += -R_lt[0]/pow(r,2)*(nu[1]*GeoAc_Sources.c_gr[1] + nu[2]*GeoAc_Sources.c_gr[2])
-                                            + 1.0/r*(mu_lt[1]*GeoAc_Sources.c_gr[1] + nu[1]*GeoAc_Sources.dc_gr[1][0] + mu_lt[2]*GeoAc_Sources.c_gr[2] + nu[2]*GeoAc_Sources.dc_gr[2][0]);
-        GeoAc_Sources.d_GeoTerms[1][0] += -mu_lt[0]*GeoAc_Sources.c_gr[1] - nu[0]*GeoAc_Sources.dc_gr[1][0] + mu_lt[2]*GeoAc_Sources.c_gr[2]*tan(theta) + nu[2]*GeoAc_Sources.dc_gr[2][0]*tan(theta) + nu[2]*GeoAc_Sources.c_gr[2]*R_lt[1]/pow(cos(theta),2);
-        GeoAc_Sources.d_GeoTerms[2][0] += -GeoAc_Sources.dc_gr[2][0]*(nu[0]*cos(theta) + nu[1]*sin(theta)) - GeoAc_Sources.c_gr[2]*(mu_lt[0]*cos(theta) - nu[0]*R_lt[1]*sin(theta) + mu_lt[1]*sin(theta) + nu[1]*R_lt[1]*cos(theta));
+        sources.d_GeoTerms[0][0] += -R_lt[0]/pow(r,2)*(nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2])
+                                            + 1.0/r*(mu_lt[1]*sources.c_gr[1] + nu[1]*sources.dc_gr[1][0] + mu_lt[2]*sources.c_gr[2] + nu[2]*sources.dc_gr[2][0]);
+        sources.d_GeoTerms[1][0] += -mu_lt[0]*sources.c_gr[1] - nu[0]*sources.dc_gr[1][0] + mu_lt[2]*sources.c_gr[2]*tan(theta) + nu[2]*sources.dc_gr[2][0]*tan(theta) + nu[2]*sources.c_gr[2]*R_lt[1]/pow(cos(theta),2);
+        sources.d_GeoTerms[2][0] += -sources.dc_gr[2][0]*(nu[0]*cos(theta) + nu[1]*sin(theta)) - sources.c_gr[2]*(mu_lt[0]*cos(theta) - nu[0]*R_lt[1]*sin(theta) + mu_lt[1]*sin(theta) + nu[1]*R_lt[1]*cos(theta));
         
-        GeoAc_Sources.d_GeoTerms[0][1] = 0.0;
-        GeoAc_Sources.d_GeoTerms[1][1] = (mu_lp[0]*GeoAc_Sources.v + nu[0]*GeoAc_Sources.dv[4] - mu_lp[1]*GeoAc_Sources.w - nu[1] * GeoAc_Sources.dw[4]);
-        GeoAc_Sources.d_GeoTerms[2][1] = (mu_lp[0]*GeoAc_Sources.u + nu[0]*GeoAc_Sources.du[4] - mu_lp[2]*GeoAc_Sources.w - nu[2] * GeoAc_Sources.dw[4])*cos(theta) - (nu[0]*GeoAc_Sources.u - nu[2]*GeoAc_Sources.w)*R_lp[1]*sin(theta)
-                                            + (mu_lp[1]*GeoAc_Sources.u + nu[1]*GeoAc_Sources.du[4] - mu_lp[2]*GeoAc_Sources.v - nu[2] * GeoAc_Sources.dv[4])*sin(theta) + (nu[1]*GeoAc_Sources.u - nu[2]*GeoAc_Sources.v)*R_lp[1]*cos(theta);
+        sources.d_GeoTerms[0][1] = 0.0;
+        sources.d_GeoTerms[1][1] = (mu_lp[0]*sources.v + nu[0]*sources.dv[4] - mu_lp[1]*sources.w - nu[1] * sources.dw[4]);
+        sources.d_GeoTerms[2][1] = (mu_lp[0]*sources.u + nu[0]*sources.du[4] - mu_lp[2]*sources.w - nu[2] * sources.dw[4])*cos(theta) - (nu[0]*sources.u - nu[2]*sources.w)*R_lp[1]*sin(theta)
+                                            + (mu_lp[1]*sources.u + nu[1]*sources.du[4] - mu_lp[2]*sources.v - nu[2] * sources.dv[4])*sin(theta) + (nu[1]*sources.u - nu[2]*sources.v)*R_lp[1]*cos(theta);
         
-        GeoAc_Sources.d_GeoTerms[0][1] += -R_lp[0]/pow(r,2)*(nu[1]*GeoAc_Sources.c_gr[1] + nu[2]*GeoAc_Sources.c_gr[2])
-                                            + 1.0/r*(mu_lp[1]*GeoAc_Sources.c_gr[1] + nu[1]*GeoAc_Sources.dc_gr[1][1] + mu_lp[2]*GeoAc_Sources.c_gr[2] + nu[2]*GeoAc_Sources.dc_gr[2][1]);
-        GeoAc_Sources.d_GeoTerms[1][1] += -mu_lp[0]*GeoAc_Sources.c_gr[1] - nu[0]*GeoAc_Sources.dc_gr[1][1] + mu_lp[2]*GeoAc_Sources.c_gr[2]*tan(theta) + nu[2]*GeoAc_Sources.dc_gr[2][1]*tan(theta) + nu[2]*GeoAc_Sources.c_gr[2]*R_lp[1]/pow(cos(theta),2);
-        GeoAc_Sources.d_GeoTerms[2][1] += -GeoAc_Sources.dc_gr[2][1]*(nu[0]*cos(theta) + nu[1]*sin(theta)) - GeoAc_Sources.c_gr[2]*(mu_lp[0]*cos(theta) - nu[0]*R_lp[1]*sin(theta) + mu_lp[1]*sin(theta) + nu[1]*R_lp[1]*cos(theta));
+        sources.d_GeoTerms[0][1] += -R_lp[0]/pow(r,2)*(nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2])
+                                            + 1.0/r*(mu_lp[1]*sources.c_gr[1] + nu[1]*sources.dc_gr[1][1] + mu_lp[2]*sources.c_gr[2] + nu[2]*sources.dc_gr[2][1]);
+        sources.d_GeoTerms[1][1] += -mu_lp[0]*sources.c_gr[1] - nu[0]*sources.dc_gr[1][1] + mu_lp[2]*sources.c_gr[2]*tan(theta) + nu[2]*sources.dc_gr[2][1]*tan(theta) + nu[2]*sources.c_gr[2]*R_lp[1]/pow(cos(theta),2);
+        sources.d_GeoTerms[2][1] += -sources.dc_gr[2][1]*(nu[0]*cos(theta) + nu[1]*sin(theta)) - sources.c_gr[2]*(mu_lp[0]*cos(theta) - nu[0]*R_lp[1]*sin(theta) + mu_lp[1]*sin(theta) + nu[1]*R_lp[1]*cos(theta));
 
     }
 }
 //-----------------------------------------------------------//
 //-------Evaluate the Source Equation For Specific Index-----//
 //-----------------------------------------------------------//
-double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number){
+// Modified to pass in GeoAc_Sources_Struct by reference
+double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number, GeoAc_Sources_Struct &sources){
 	double result;
     
 	// Set variables used in all equations
@@ -385,36 +338,36 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number)
 		case(0):	// d r / d s
         case(1):    // d theta / d s
         case(2):    // d phi / d s
-			result = GeoAc_Sources.GeoCoeff[Eq_Number]*GeoAc_Sources.c_gr[Eq_Number]/GeoAc_Sources.c_gr_mag;
+			result = sources.GeoCoeff[Eq_Number]*sources.c_gr[Eq_Number]/sources.c_gr_mag;
 			break;
             
 		case(3): 	// d nu_r /ds
 		case(4): 	// d nu_theta / ds
 		case(5): 	// d nu_phi / ds
-			result = -GeoAc_Sources.GeoCoeff[Eq_Number-3]/GeoAc_Sources.c_gr_mag*(GeoAc_Sources.nu_mag*GeoAc_Sources.dc[Eq_Number-3]
-                        + nu[0]*GeoAc_Sources.dw[Eq_Number-3] + nu[1]*GeoAc_Sources.dv[Eq_Number-3] + nu[2]*GeoAc_Sources.du[Eq_Number-3] + GeoAc_Sources.GeoTerms[Eq_Number-3]);
+			result = -sources.GeoCoeff[Eq_Number-3]/sources.c_gr_mag*(sources.nu_mag*sources.dc[Eq_Number-3]
+                        + nu[0]*sources.dw[Eq_Number-3] + nu[1]*sources.dv[Eq_Number-3] + nu[2]*sources.du[Eq_Number-3] + sources.GeoTerms[Eq_Number-3]);
 			break;
             
             
 		case(6):	// d R_lt/ds
         case(7):	// d Theta_lt/ds
         case(8): 	// d Phi_lt/ds
-			result = GeoAc_Sources.d_GeoCoeff[Eq_Number-6][0]*GeoAc_Sources.c_gr[Eq_Number-6]/GeoAc_Sources.c_gr_mag
-                         + GeoAc_Sources.GeoCoeff[Eq_Number-6]*GeoAc_Sources.dc_gr[Eq_Number-6][0]/GeoAc_Sources.c_gr_mag
-                            - GeoAc_Sources.GeoCoeff[Eq_Number-6]*GeoAc_Sources.c_gr[Eq_Number-6]/pow(GeoAc_Sources.c_gr_mag,2) * GeoAc_Sources.dc_gr_mag[0];
+			result = sources.d_GeoCoeff[Eq_Number-6][0]*sources.c_gr[Eq_Number-6]/sources.c_gr_mag
+                         + sources.GeoCoeff[Eq_Number-6]*sources.dc_gr[Eq_Number-6][0]/sources.c_gr_mag
+                            - sources.GeoCoeff[Eq_Number-6]*sources.c_gr[Eq_Number-6]/pow(sources.c_gr_mag,2) * sources.dc_gr_mag[0];
 			break;
             
             
 		case(9): 	// d mu_r_lt /ds
 		case(10): 	// d mu_theta_lt /ds
 		case(11): 	// d mu_phi_lt /ds
-			result = -GeoAc_Sources.d_GeoCoeff[Eq_Number-9][0]/GeoAc_Sources.c_gr_mag*(GeoAc_Sources.nu_mag*GeoAc_Sources.dc[Eq_Number-9]
-                            + nu[0]*GeoAc_Sources.dw[Eq_Number-9] + nu[1]*GeoAc_Sources.dv[Eq_Number-9] + nu[2]*GeoAc_Sources.du[Eq_Number-9] + GeoAc_Sources.GeoTerms[Eq_Number-9])
-                    + GeoAc_Sources.GeoCoeff[Eq_Number-9]/pow(GeoAc_Sources.c_gr_mag,2) * GeoAc_Sources.dc_gr_mag[0]*(GeoAc_Sources.nu_mag*GeoAc_Sources.dc[Eq_Number-9]
-                            + nu[0]*GeoAc_Sources.dw[Eq_Number-9] + nu[1]*GeoAc_Sources.dv[Eq_Number-9] + nu[2]*GeoAc_Sources.du[Eq_Number-9])
-                    - GeoAc_Sources.GeoCoeff[Eq_Number-9]/GeoAc_Sources.c_gr_mag*(GeoAc_Sources.dnu_mag[0]*GeoAc_Sources.dc[Eq_Number-9] + GeoAc_Sources.nu_mag*GeoAc_Sources.ddc[Eq_Number-9][0]
-                            + mu_lt[0]*GeoAc_Sources.dw[Eq_Number-9] + mu_lt[1]*GeoAc_Sources.dv[Eq_Number-9] + mu_lt[2]*GeoAc_Sources.du[Eq_Number-9]
-                                + nu[0]*GeoAc_Sources.ddw[Eq_Number-9][0] + nu[1]*GeoAc_Sources.ddv[Eq_Number-9][0] + nu[2]*GeoAc_Sources.ddu[Eq_Number-9][0] + GeoAc_Sources.d_GeoTerms[Eq_Number-9][0]);
+			result = -sources.d_GeoCoeff[Eq_Number-9][0]/sources.c_gr_mag*(sources.nu_mag*sources.dc[Eq_Number-9]
+                            + nu[0]*sources.dw[Eq_Number-9] + nu[1]*sources.dv[Eq_Number-9] + nu[2]*sources.du[Eq_Number-9] + sources.GeoTerms[Eq_Number-9])
+                    + sources.GeoCoeff[Eq_Number-9]/pow(sources.c_gr_mag,2) * sources.dc_gr_mag[0]*(sources.nu_mag*sources.dc[Eq_Number-9]
+                            + nu[0]*sources.dw[Eq_Number-9] + nu[1]*sources.dv[Eq_Number-9] + nu[2]*sources.du[Eq_Number-9])
+                    - sources.GeoCoeff[Eq_Number-9]/sources.c_gr_mag*(sources.dnu_mag[0]*sources.dc[Eq_Number-9] + sources.nu_mag*sources.ddc[Eq_Number-9][0]
+                            + mu_lt[0]*sources.dw[Eq_Number-9] + mu_lt[1]*sources.dv[Eq_Number-9] + mu_lt[2]*sources.du[Eq_Number-9]
+                                + nu[0]*sources.ddw[Eq_Number-9][0] + nu[1]*sources.ddv[Eq_Number-9][0] + nu[2]*sources.ddu[Eq_Number-9][0] + sources.d_GeoTerms[Eq_Number-9][0]);
             
 			break;
             
@@ -422,21 +375,21 @@ double GeoAc_EvalSrcEq(double ray_length, double* current_values, int Eq_Number)
 		case(12):  	// dR_lp/ds
 		case(13):  	// dTheta_lp/ds
         case(14):	// dPhi_lp/ds
-			result = GeoAc_Sources.d_GeoCoeff[Eq_Number-12][1]*GeoAc_Sources.c_gr[Eq_Number-12]/GeoAc_Sources.c_gr_mag
-                        + GeoAc_Sources.GeoCoeff[Eq_Number-12]*GeoAc_Sources.dc_gr[Eq_Number-12][1]/GeoAc_Sources.c_gr_mag
-                            - GeoAc_Sources.GeoCoeff[Eq_Number-12]*GeoAc_Sources.c_gr[Eq_Number-12]/pow(GeoAc_Sources.c_gr_mag,2) * GeoAc_Sources.dc_gr_mag[1];
+			result = sources.d_GeoCoeff[Eq_Number-12][1]*sources.c_gr[Eq_Number-12]/sources.c_gr_mag
+                        + sources.GeoCoeff[Eq_Number-12]*sources.dc_gr[Eq_Number-12][1]/sources.c_gr_mag
+                            - sources.GeoCoeff[Eq_Number-12]*sources.c_gr[Eq_Number-12]/pow(sources.c_gr_mag,2) * sources.dc_gr_mag[1];
 			break;
             
 		case(15): 	// d mu_r_lp/ds
 		case(16): 	// d mu_t_lp/ds
 		case(17): 	// d mu_p_lp/ds
-			result = -GeoAc_Sources.d_GeoCoeff[Eq_Number-15][1]/GeoAc_Sources.c_gr_mag*(GeoAc_Sources.nu_mag*GeoAc_Sources.dc[Eq_Number-15]
-                        + nu[0]*GeoAc_Sources.dw[Eq_Number-15] + nu[1]*GeoAc_Sources.dv[Eq_Number-15] + nu[2]*GeoAc_Sources.du[Eq_Number-15] + GeoAc_Sources.GeoTerms[Eq_Number-15])
-                    + GeoAc_Sources.GeoCoeff[Eq_Number-15]/pow(GeoAc_Sources.c_gr_mag,2) * GeoAc_Sources.dc_gr_mag[1]*(GeoAc_Sources.nu_mag*GeoAc_Sources.dc[Eq_Number-15]
-                        + nu[0]*GeoAc_Sources.dw[Eq_Number-15] + nu[1]*GeoAc_Sources.dv[Eq_Number-15] + nu[2]*GeoAc_Sources.du[Eq_Number-15])
-                    - GeoAc_Sources.GeoCoeff[Eq_Number-15]/GeoAc_Sources.c_gr_mag*(GeoAc_Sources.dnu_mag[1]*GeoAc_Sources.dc[Eq_Number-15] + GeoAc_Sources.nu_mag*GeoAc_Sources.ddc[Eq_Number-15][1]
-                        + mu_lp[0]*GeoAc_Sources.dw[Eq_Number-15] + mu_lp[1]*GeoAc_Sources.dv[Eq_Number-15] + mu_lp[2]*GeoAc_Sources.du[Eq_Number-15]
-                            + nu[0]*GeoAc_Sources.ddw[Eq_Number-15][1] + nu[1]*GeoAc_Sources.ddv[Eq_Number-15][1] + nu[2]*GeoAc_Sources.ddu[Eq_Number-15][1] + GeoAc_Sources.d_GeoTerms[Eq_Number-15][1]);
+			result = -sources.d_GeoCoeff[Eq_Number-15][1]/sources.c_gr_mag*(sources.nu_mag*sources.dc[Eq_Number-15]
+                        + nu[0]*sources.dw[Eq_Number-15] + nu[1]*sources.dv[Eq_Number-15] + nu[2]*sources.du[Eq_Number-15] + sources.GeoTerms[Eq_Number-15])
+                    + sources.GeoCoeff[Eq_Number-15]/pow(sources.c_gr_mag,2) * sources.dc_gr_mag[1]*(sources.nu_mag*sources.dc[Eq_Number-15]
+                        + nu[0]*sources.dw[Eq_Number-15] + nu[1]*sources.dv[Eq_Number-15] + nu[2]*sources.du[Eq_Number-15])
+                    - sources.GeoCoeff[Eq_Number-15]/sources.c_gr_mag*(sources.dnu_mag[1]*sources.dc[Eq_Number-15] + sources.nu_mag*sources.ddc[Eq_Number-15][1]
+                        + mu_lp[0]*sources.dw[Eq_Number-15] + mu_lp[1]*sources.dv[Eq_Number-15] + mu_lp[2]*sources.du[Eq_Number-15]
+                            + nu[0]*sources.ddw[Eq_Number-15][1] + nu[1]*sources.ddv[Eq_Number-15][1] + nu[2]*sources.ddu[Eq_Number-15][1] + sources.d_GeoTerms[Eq_Number-15][1]);
 			break;
             
 	}
@@ -454,10 +407,11 @@ double GeoAc_EvalHamiltonian(double ray_length, double* current_values, double c
                 + (w(r,theta,phi)*nu[0] + v(r,theta,phi)*nu[1] + u(r,theta,phi)*nu[2])/c(r, theta, phi);
 }
 
-double GeoAc_EvalHamiltonian(double** solution, int index){
+// Modified to pass in GeoAc_Sources_Struct by reference
+double GeoAc_EvalHamiltonian(double** solution, int index, GeoAc_Sources_Struct &sources){
 	double nu[3] = {solution[index][3], solution[index][4], solution[index][5]};
 	double r = solution[index][0],	theta = solution[index][1],	phi = solution[index][2];
-	double r0 = GeoAc_Sources.src_loc[0], 	theta0 = GeoAc_Sources.src_loc[1], 	phi0 = GeoAc_Sources.src_loc[2];
+	double r0 = sources.src_loc[0], 	theta0 = sources.src_loc[1], 	phi0 = sources.src_loc[2];
     
 	return sqrt(nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]) - c(r0,theta0,phi0)/c(r,theta,phi) + (w(r,theta,phi)*nu[0] + v(r,theta,phi)*nu[1] + u(r,theta,phi)*nu[2])/c(r, theta, phi);
 }
@@ -499,13 +453,14 @@ double GeoAc_EvalHamiltonian_Deriv(double** solution, int index){
 //--------------------------------------------------------------------------//
 //-------Check if ray has left propagation region or returned to ground-----//
 //--------------------------------------------------------------------------//
-bool GeoAc_BreakCheck(double ** solution, int index){
+// Modified to pass in GeoAc_Sources_Struct by reference
+bool GeoAc_BreakCheck(double ** solution, int index, GeoAc_Sources_Struct &sources){
 	bool check = false;
 
 	double alt      = solution[index][0];
 
-    double GC_Dist1 = pow(sin((solution[index][1] - GeoAc_Sources.src_loc[1])/2.0),2);
-    double GC_Dist2 = cos(GeoAc_Sources.src_loc[1]) * cos(solution[index][1]) * pow(sin((solution[index][2] - GeoAc_Sources.src_loc[2])/2.0),2);
+    double GC_Dist1 = pow(sin((solution[index][1] - sources.src_loc[1])/2.0),2);
+    double GC_Dist2 = cos(sources.src_loc[1]) * cos(solution[index][1]) * pow(sin((solution[index][2] - sources.src_loc[2])/2.0),2);
     double range = 2.0 * r_earth * asin(sqrt(GC_Dist1 + GC_Dist2));
  
     if(alt > GeoAc_vert_limit)      check = true;
@@ -608,17 +563,17 @@ double GeoAc_Jacobian(double ** solution, int index){
 	return	pow(r,2)*cos(theta)*(dr_ds*(dt_dlt*dp_dlp - dt_dlp*dp_dlt) - dr_dlt*(dt_ds*dp_dlp - dp_ds*dt_dlp) + dr_dlp*(dt_ds*dp_dlt - dp_ds*dt_dlt));
 }
 
-// Modified to pass in GeoAc_ angles
-double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta, double GeoAc_phi){
-    double r0 = GeoAc_Sources.src_loc[0], theta0 = GeoAc_Sources.src_loc[1], phi0 = GeoAc_Sources.src_loc[2];
+// Modified to pass in GeoAc_ angles and GeoAc_Sources_Struct
+double GeoAc_Amplitude(double ** solution, int index, double GeoAc_theta, double GeoAc_phi, GeoAc_Sources_Struct &sources){
+    double r0 = sources.src_loc[0], theta0 = sources.src_loc[1], phi0 = sources.src_loc[2];
 	double r = solution[index][0], theta = solution[index][1], phi = solution[index][2];
 	double nu[3] = {solution[index][3], solution[index][4], solution[index][5]};
     double nu0[3] = {sin(GeoAc_theta),  cos(GeoAc_theta)*sin(GeoAc_phi),    cos(GeoAc_theta)*cos(GeoAc_phi)};
     
-    double  nu_mag = (GeoAc_Sources.c0 - nu[0]*w(r,theta,phi) - nu[1]*v(r,theta,phi) - nu[2]*u(r,theta,phi))/c(r,theta,phi),
-            nu_mag0 = GeoAc_Sources.nu0,
+    double  nu_mag = (sources.c0 - nu[0]*w(r,theta,phi) - nu[1]*v(r,theta,phi) - nu[2]*u(r,theta,phi))/c(r,theta,phi),
+            nu_mag0 = sources.nu0,
             c_prop[3] =  {c(r,theta,phi)*nu[0]/nu_mag + w(r,theta,phi),			c(r,theta,phi)*nu[1]/nu_mag + v(r,theta,phi), 			c(r,theta,phi)*nu[2]/nu_mag + u(r, theta, phi)},
-            c_prop0[3] = {GeoAc_Sources.c0*nu0[0]/nu_mag0 + w(r0,theta0,phi0),	GeoAc_Sources.c0*nu0[1]/nu_mag + v(r0,theta0,phi0),		GeoAc_Sources.c0*nu0[2]/nu_mag + u(r0, theta0, phi0)};
+            c_prop0[3] = {sources.c0*nu0[0]/nu_mag0 + w(r0,theta0,phi0),	sources.c0*nu0[1]/nu_mag + v(r0,theta0,phi0),		sources.c0*nu0[2]/nu_mag + u(r0, theta0, phi0)};
     
 	double  c_prop_mag =  sqrt(pow(c_prop[0],2) +  pow(c_prop[1],2) +  pow(c_prop[2],2)),
             c_prop_mag0 = sqrt(pow(c_prop0[0],2) + pow(c_prop0[1],2) + pow(c_prop0[2],2));

@@ -234,7 +234,20 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     
 	double** solution;
 	GeoAc_BuildSolutionArray(solution,length);
-    
+
+    // Create a local instance of thise struct to be passed to other functions
+    struct GeoAc_Sources_Struct sources = {
+        {0.0, 0.0, 0.0}, 0.0,
+        0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
+        0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
+        0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
+        0.0, {0.0, 0.0, 0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
+        0.0, 0.0, {0.0, 0.0},
+        {0.0, 0.0, 0.0}, 0.0, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}}, {0.0, 0.0},
+        {0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}},
+        {0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}}
+    };
+
     for(double phi = phi_min;           phi <= phi_max;     phi+=phi_step){
         // Calculate our phi angle
         double GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
@@ -244,14 +257,14 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             double GeoAc_theta = theta*Pi/180.0;
             
             GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0,
-                                       GeoAc_theta, GeoAc_phi);
+                                       GeoAc_theta, GeoAc_phi, sources);
             travel_time_sum = 0.0;
             attenuation = 0.0;
             r_max = 0.0;
             
             for(int bnc_cnt = 0; bnc_cnt <= bounces; bnc_cnt++){
                 
-                k = GeoAc_Propagate_RK4(solution, BreakCheck);
+                k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
                 
                 if(WriteRays || WriteCaustics){
                     if(WriteCaustics){
@@ -270,7 +283,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                             raypath << solution[m][0] - r_earth;
                             raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                             raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi));}
+                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi,sources));}
                             else{           raypath << '\t' << 0.0;}
                             raypath << '\t' << -attenuation;
                             raypath << '\t' << travel_time_sum << '\n';
@@ -311,12 +324,12 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 results << '\t' << r_max;
                 results << '\t' << inclination;
                 results << '\t' << back_az;
-                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi));}
+                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi,sources));}
                 else{           results << '\t' << 0.0;}
                 results << '\t' << -attenuation;
                 results << '\n';
                 
-                GeoAc_SetReflectionConditions(solution,k);	
+                GeoAc_SetReflectionConditions(solution,k, sources);	
             }
             if(WriteRays){raypath << '\n';}
             GeoAc_ClearSolutionArray(solution,k);

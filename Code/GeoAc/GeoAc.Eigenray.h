@@ -19,8 +19,8 @@ double Calc_GC_Distance(double, double, double, double);    // Function to calcu
 
 double Modify_d_theta(double, double);                      // Function to modify d_theta in GeoAc_EstimateEigenray function
 
-// Modified to pass GeoAc_ angles by reference
-bool GeoAc_EstimateEigenray(double [3], double [2], double, double, double &, double &, double &, int, double, double &, double &);  // Function to identify inclination at fixed azimuth for specified arrival range
-void GeoAc_3DEigenray_LM(double [3], double [2], double &, double &, double, int, int, char [], double &, double &);       // Function to identify exact eigenray
+// Modified to pass GeoAc_ angles and GeoAc_Sources_Struct by reference
+bool GeoAc_EstimateEigenray(double [3], double [2], double, double, double &, double &, double &, int, double, double &, double &, GeoAc_Sources_Struct&);  // Function to identify inclination at fixed azimuth for specified arrival range
+void GeoAc_3DEigenray_LM(double [3], double [2], double &, double &, double, int, int, char [], double &, double &, GeoAc_Sources_Struct&);       // Function to identify exact eigenray
 
 #endif /* GEOAC_EIGENRAY_H_ */
