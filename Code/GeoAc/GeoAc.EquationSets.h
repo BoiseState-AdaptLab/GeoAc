@@ -7,7 +7,8 @@ void    GeoAc_SetSystem();                                              // Funct
 
 void    GeoAc_SetInitialConditions(double**&);                          // Function sets initial conditions for a source at the origin with launch angles GeoAc_theta, GeoAc_phi
 void    GeoAc_SetInitialConditions(double**&, double, double);          // Function sets initial conditions for a source at (r_0, z_0) with launch angles GeoAc_theta, GeoAc_phi
-void    GeoAc_SetInitialConditions(double**&, double, double, double);  // Function sets initial conditions for a source at (x_0, y_0, z_0) with launch angles GeoAc_theta, GeoAc_phi
+// Modified to take GeoAc_ angles by value
+void    GeoAc_SetInitialConditions(double**&, double, double, double, double, double);  // Function sets initial conditions for a source at (x_0, y_0, z_0) with launch angles GeoAc_theta, GeoAc_phi
 
 void    GeoAc_ApproximateIntercept(double**, int, double*&);            // Function uses linear interpolation to estimate ground intercept values
 void    GeoAc_SetReflectionConditions(double**&, int);                  // Function sets reflection conditions
@@ -27,7 +28,8 @@ void    GeoAc_TravelTimeSegment(double&, double**, int, int);           // Funct
 double  GeoAc_SB_Atten(double **, int, double);                         // Function to calculate atmospheric attenuation through a ray path
 void    GeoAc_SB_AttenSegment(double&, double **, int , int, double);   // Function to increment atmospheric attenuation through a ray path
 double  GeoAc_Jacobian(double **, int);                                 // Function to calculate the Jacobian determinant
-double  GeoAc_Amplitude(double **, int);                                // Function to calculate the transport equation coefficient
+// Modified to take GeoAc_ angles by value
+double  GeoAc_Amplitude(double **, int, double, double);                                // Function to calculate the transport equation coefficient
 int     GeoAc_CausticCnt(double **, int, int);                          // Function to count caustics from ray origin to s = ds * index
 
 #endif /* GEOAC_EQSETS_H_ */

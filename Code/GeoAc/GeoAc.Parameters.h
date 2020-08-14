@@ -4,8 +4,10 @@
 using namespace std;
 
 //Initial angles at the source
-	extern double   GeoAc_theta;	// inclination angle of ray path
-	extern double   GeoAc_phi;      // azimuth angle of ray path
+// These have been made into local variables
+// to allow parallelization
+//	extern double   GeoAc_theta;	// inclination angle of ray path
+//	extern double   GeoAc_phi;      // azimuth angle of ray path
 
 // Parameters for configuring solver
     extern int      GeoAc_EqCnt;		// Number of equations to solve

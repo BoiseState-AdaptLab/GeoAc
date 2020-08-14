@@ -6,8 +6,8 @@
 using namespace std;
 
 //Initial angles at the source
-	double	GeoAc_theta;	// inclination angle
-	double 	GeoAc_phi;      // azimuth angle
+//	double	GeoAc_theta;	// inclination angle
+//	double 	GeoAc_phi;      // azimuth angle
 
 // Parameters for configuring solver
     int     GeoAc_EqCnt;		// Number of equations to solve for
