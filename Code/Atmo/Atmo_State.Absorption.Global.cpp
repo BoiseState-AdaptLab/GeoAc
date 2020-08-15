@@ -5,11 +5,15 @@
 #include "GeoAc.Parameters.h"
 #include "Atmo_State.h"
 
+// Add this inclued to access Splines_Struct
+#include "G2S_GlobalSpline1D.h"
+
 using namespace std;
 
 double tweak_abs = 0.3;
 
-double SuthBass_Alpha(double r, double theta, double phi, double freq){
+// Modified to pass in Splines_Struct by reference
+double SuthBass_Alpha(double r, double theta, double phi, double freq, Splines_Struct &splines){
     // Expressions based on Bass and Sutherland, JASA 2004
     // Computes alpha(freq) for given G2S output
     // Subroutine can easily be modified to include dispersion effects
@@ -28,8 +32,8 @@ double SuthBass_Alpha(double r, double theta, double phi, double freq){
     
     // Atmospheric composition constants
     mu_o  = 18.192E-6;                                                              // Reference viscosity [kg/(m*s)]
-    T_o   = pow(c(z_grnd,theta,phi)*1000.0,2)/(R*gam);                              // Reference temperature [K]
-    P_o   = rho(z_grnd,theta,phi)*pow(c(z_grnd, theta, phi)*1000.0,2)/gam*1000.0;   // Reference pressure [Pa]
+    T_o   = pow(c(z_grnd,theta,phi,splines.Temp_Spline)*1000.0,2)/(R*gam);                              // Reference temperature [K]
+    P_o   = rho(z_grnd,theta,phi,splines.Density_Spline)*pow(c(z_grnd, theta, phi,splines.Temp_Spline)*1000.0,2)/gam*1000.0;   // Reference pressure [Pa]
     S     = 117.0;                                                                  // Sutherland constant [K]
     
     Cv_R[0] = 5.0/2.0;          // Heat capacity|volume (O2)
@@ -45,9 +49,9 @@ double SuthBass_Alpha(double r, double theta, double phi, double freq){
     Theta[2]= 915.0;            // Charact. temperature (CO2)
     Theta[3]= 1037.0;           // Charact. temperature (O3)
     
-    T_z     = pow(c(r,theta,phi)*1000.0,2)/(R*gam);                         // Temperature at location [K]
-    P_z     = rho(r,theta,phi)*pow(c(r,theta,phi)*1000.0,2)/gam * 1000.0;   // Pressure at location [Pa]
-    c_snd_z = c(r,theta,phi);                                               // Sound speed at location [km/s]
+    T_z     = pow(c(r,theta,phi,splines.Temp_Spline)*1000.0,2)/(R*gam);                         // Temperature at location [K]
+    P_z     = rho(r,theta,phi,splines.Density_Spline)*pow(c(r,theta,phi,splines.Temp_Spline)*1000.0,2)/gam * 1000.0;   // Pressure at location [Pa]
+    c_snd_z = c(r,theta,phi,splines.Temp_Spline);                                               // Sound speed at location [km/s]
     
     mu      = mu_o*sqrt(T_z/T_o)*((1.0+S/T_o)/(1.0+S/T_z)); // Viscosity [kg/(m*s)]
     nu      = (8.0*Pi*freq*mu)/(3.0*P_z);                   // Nondimensional frequency

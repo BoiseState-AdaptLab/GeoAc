@@ -17,9 +17,11 @@ using namespace std;
 //-----------------------------------------------//
 //---------Define the Propagation Region---------//
 //-----------------------------------------------//
+// These values are only set once
 double r_min, r_max;
 
-void GeoAc_SetPropRegion(){
+// Modified to pass in Windu_Spline by reference
+void GeoAc_SetPropRegion(NaturalCubicSpline_1D &Windu_Spline){
     r_min = Windu_Spline.x_vals[0];
     r_max = Windu_Spline.x_vals[Windu_Spline.length-1];
     
@@ -32,25 +34,13 @@ void GeoAc_SetPropRegion(){
 //-----------------------------------------------//
 //---------Topographical Ground Function---------//
 //-----------------------------------------------//
+// Constants, don't worry about them
 double r_earth = 6370.0;
 double z_grnd = 0.0;
 
 double GroundTopography(double lat, double lon){
     return r_earth + z_grnd;
 }
-
-
-//----------------------------------------//
-//------Parameters for Interpolation------//
-//----------------------------------------//
-int r_cnt;          // Number of vertical points
-int accel;          // Acceleration index
-double* r_vals;     // r_k elements (r_cnt length)
-
-double* T_vals;    // Temperature at r_k
-double* u_vals;    // E-W winds at r_k
-double* v_vals;    // N-S winds at r_k
-double* rho_vals;  // Density at r_k
 
 //----------------------------------------//
 //----------File IO Manipulation----------//
@@ -102,47 +92,49 @@ bool Check_G2S_Format(string file_name){
 //----------------------------------------//
 //---------G2S Array Manipulation---------//
 //----------------------------------------//
-void SetUp_G2S_Arrays(char* file_name){
-    r_cnt = file_length(file_name);
+// Modified to pass in Splines_Struct by reference
+void SetUp_G2S_Arrays(char* file_name, Splines_Struct &splines){
+    splines.r_cnt = file_length(file_name);
     
-    r_vals = new double [r_cnt];
-    T_vals = new double [r_cnt];   rho_vals = new double [r_cnt];
-    u_vals = new double [r_cnt];   v_vals = new double [r_cnt];
+    splines.r_vals = new double [splines.r_cnt];
+    splines.T_vals = new double [splines.r_cnt];   splines.rho_vals = new double [splines.r_cnt];
+    splines.u_vals = new double [splines.r_cnt];   splines.v_vals = new double [splines.r_cnt];
 }
 
-void Load_G2S(char* file_name, char* option){
+// Modified to pass in Splines_Struct by reference
+void Load_G2S(char* file_name, char* option, Splines_Struct &splines){
     ifstream file_in; double temp;
     file_in.open(file_name);
     
     if (strncmp(option, "zTuvdp",6) == 0){
-        for (int nr = 0; nr < r_cnt; nr++){
-            file_in >> r_vals[nr];      // Extract r_i value
-            file_in >> T_vals[nr];      // Extract T(r_i)
-            file_in >> u_vals[nr];      // Extract u(r_i)
-            file_in >> v_vals[nr];      // Extract v(r_i)
-            file_in >> rho_vals[nr];    // Extract rho(r_i)
+        for (int nr = 0; nr < splines.r_cnt; nr++){
+            file_in >> splines.r_vals[nr];      // Extract r_i value
+            file_in >> splines.T_vals[nr];      // Extract T(r_i)
+            file_in >> splines.u_vals[nr];      // Extract u(r_i)
+            file_in >> splines.v_vals[nr];      // Extract v(r_i)
+            file_in >> splines.rho_vals[nr];    // Extract rho(r_i)
             file_in >> temp;            // Extract p(r_i)
             
             
             // Convert to global radius and convert winds m/s -> km/s and scale near the ground to guarantee u(r_g), v(r_g) = 0
-            r_vals[nr] += r_earth;
-            u_vals[nr] *= (2.0 / (1.0 + exp(-(r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
-            v_vals[nr] *= (2.0 / (1.0 + exp(-(r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
+            splines.r_vals[nr] += r_earth;
+            splines.u_vals[nr] *= (2.0 / (1.0 + exp(-(splines.r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
+            splines.v_vals[nr] *= (2.0 / (1.0 + exp(-(splines.r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
         }
     } else if (strncmp(option, "zuvwTdp",7) == 0){
-        for (int nr = 0; nr < r_cnt; nr++){
-            file_in >> r_vals[nr];      // Extract r_i value
-            file_in >> u_vals[nr];      // Extract u(r_i)
-            file_in >> v_vals[nr];      // Extract v(r_i)
+        for (int nr = 0; nr < splines.r_cnt; nr++){
+            file_in >> splines.r_vals[nr];      // Extract r_i value
+            file_in >> splines.u_vals[nr];      // Extract u(r_i)
+            file_in >> splines.v_vals[nr];      // Extract v(r_i)
             file_in >> temp;            // Extract w(r_i) but don't store it
-            file_in >> T_vals[nr];      // Extract T(r_i)
-            file_in >> rho_vals[nr];    // Extract rho(r_i)
+            file_in >> splines.T_vals[nr];      // Extract T(r_i)
+            file_in >> splines.rho_vals[nr];    // Extract rho(r_i)
             file_in >> temp;            // Extract p(r_i) but don't store it
             
             // Convert to global radius and convert winds m/s -> km/s and scale near the ground to guarantee u(r_g), v(r_g) = 0
-            r_vals[nr] += r_earth;
-            u_vals[nr] *= (2.0 / (1.0 + exp(-(r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
-            v_vals[nr] *= (2.0 / (1.0 + exp(-(r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
+            splines.r_vals[nr] += r_earth;
+            splines.u_vals[nr] *= (2.0 / (1.0 + exp(-(splines.r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
+            splines.v_vals[nr] *= (2.0 / (1.0 + exp(-(splines.r_vals[nr] - r_earth - z_grnd)/0.2)) - 1.0) / 1000.0;
         }
     } else {
         cout << "Unrecognized profile option: " << option << ".  Valid options are: zTuvdp and zuvwTdp" << '\n';
@@ -150,10 +142,11 @@ void Load_G2S(char* file_name, char* option){
     file_in.close();
 }
 
-void Clear_G2S_Arrays(){
-    delete r_vals;
-    delete T_vals;      delete rho_vals;
-    delete u_vals;      delete v_vals;
+// Modified to pass in Splines_Struct by reference
+void Clear_G2S_Arrays(Splines_Struct &splines){
+    delete splines.r_vals;
+    delete splines.T_vals;      delete splines.rho_vals;
+    delete splines.u_vals;      delete splines.v_vals;
 }
 
 //----------------------------------------------//
@@ -294,42 +287,45 @@ double Eval_Spline_ddf(double x, struct NaturalCubicSpline_1D & Spline){
     } else { return 0.0;}
 }
 
+// Modified to pass in Splines_Struct by reference
+void Spline_Single_G2S(char* file_name, char* option, Splines_Struct &splines){
+    SetUp_G2S_Arrays(file_name, splines);
+    Load_G2S(file_name, option, splines);
+    
+    splines.Temp_Spline.length = splines.r_cnt;     splines.Windu_Spline.length = splines.r_cnt;
+    splines.Windv_Spline.length = splines.r_cnt;    splines.Density_Spline.length = splines.r_cnt;
 
-//----------------------------------------------------//
-//-------------Combined Function to Input-------------//
-//------G2S Files and Generate the Interpolation------//
-//----------------------------------------------------//
-struct NaturalCubicSpline_1D Temp_Spline;       struct NaturalCubicSpline_1D Windu_Spline;
-struct NaturalCubicSpline_1D Density_Spline;    struct NaturalCubicSpline_1D Windv_Spline;
+    splines.Temp_Spline.accel = splines.accel;      splines.Windu_Spline.accel = splines.accel;
+    splines.Windv_Spline.accel = splines.accel;     splines.Density_Spline.accel = splines.accel;
 
-void Spline_Single_G2S(char* file_name, char* option){
-    SetUp_G2S_Arrays(file_name);
-    Load_G2S(file_name, option);
+    splines.Temp_Spline.x_vals = splines.r_vals;    splines.Windu_Spline.x_vals = splines.r_vals;
+    splines.Windv_Spline.x_vals = splines.r_vals;   splines.Density_Spline.x_vals = splines.r_vals;
+
+    splines.Temp_Spline.f_vals = splines.T_vals;    splines.Windu_Spline.f_vals = splines.u_vals;
+    splines.Windv_Spline.f_vals = splines.v_vals;   splines.Density_Spline.f_vals = splines.rho_vals;
+
+    GeoAc_SetPropRegion(splines.Windu_Spline);
     
-    Temp_Spline.length = r_cnt;     Windu_Spline.length = r_cnt;    Windv_Spline.length = r_cnt;    Density_Spline.length = r_cnt;
-    Temp_Spline.accel = accel;      Windu_Spline.accel = accel;     Windv_Spline.accel = accel;     Density_Spline.accel = accel;
-    Temp_Spline.x_vals = r_vals;    Windu_Spline.x_vals = r_vals;   Windv_Spline.x_vals = r_vals;   Density_Spline.x_vals = r_vals;
-    Temp_Spline.f_vals = T_vals;    Windu_Spline.f_vals = u_vals;   Windv_Spline.f_vals = v_vals;   Density_Spline.f_vals = rho_vals;
-    GeoAc_SetPropRegion();
+    BuildSlopeArray(splines.Temp_Spline);       BuildSlopeArray(splines.Windu_Spline); 
+    BuildSlopeArray(splines.Density_Spline);    BuildSlopeArray(splines.Windv_Spline);
     
-    BuildSlopeArray(Temp_Spline);       BuildSlopeArray(Windu_Spline); 
-    BuildSlopeArray(Density_Spline);    BuildSlopeArray(Windv_Spline);
-    
-    Set_Slopes(Temp_Spline);            Set_Slopes(Windu_Spline);
-    Set_Slopes(Density_Spline);         Set_Slopes(Windv_Spline);
+    Set_Slopes(splines.Temp_Spline);            Set_Slopes(splines.Windu_Spline);
+    Set_Slopes(splines.Density_Spline);         Set_Slopes(splines.Windv_Spline);
 }
 
-void ClearAll(){
-    ClearSlopeArray(Temp_Spline);       ClearSlopeArray(Windu_Spline);
-    ClearSlopeArray(Density_Spline);    ClearSlopeArray(Windv_Spline);
-    Clear_G2S_Arrays();
+// Modified to pass in Splines_Struct by reference
+void ClearAll(Splines_Struct &splines){
+    ClearSlopeArray(splines.Temp_Spline);       ClearSlopeArray(splines.Windu_Spline);
+    ClearSlopeArray(splines.Density_Spline);    ClearSlopeArray(splines.Windv_Spline);
+    Clear_G2S_Arrays(splines);
 }
 
 
 //-------------------------------------//
 //---------Atmospheric Density---------//
 //-------------------------------------//
-double rho(double r, double theta, double phi){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double rho(double r, double theta, double phi, NaturalCubicSpline_1D &Density_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     return Eval_Spline_f(r_eval,Density_Spline);
@@ -342,22 +338,25 @@ double rho(double r, double theta, double phi){
 
 double gamR = 0.00040187; // gamma * R in km^2/s^2 * 1/K, c(x,y,z) = sqrt(gamma*r*T(x,y,z))
 
-double c(double r, double theta, double phi){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double c(double r, double theta, double phi, NaturalCubicSpline_1D &Temp_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     return sqrt(gamR * Eval_Spline_f(r_eval,Temp_Spline));
 }
 
-double c_diff(double r, double theta, double phi, int n){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double c_diff(double r, double theta, double phi, int n, NaturalCubicSpline_1D &Temp_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
-    if(n==0){   return gamR / (2.0 * c(r,theta,phi)) * Eval_Spline_df(r_eval,Temp_Spline);}
+    if(n==0){   return gamR / (2.0 * c(r,theta,phi, Temp_Spline)) * Eval_Spline_df(r_eval,Temp_Spline);}
     else {      return 0.0;}
 }
 
-double c_ddiff(double r, double theta, double phi, int n1, int n2){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double c_ddiff(double r, double theta, double phi, int n1, int n2, NaturalCubicSpline_1D &Temp_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
-    double SndSpd = c(r, theta, phi);
+    double SndSpd = c(r, theta, phi, Temp_Spline);
     
     if(n1==0 && n2==0){
         return gamR / (2.0 * SndSpd) * Eval_Spline_ddf(r_eval,Temp_Spline)
@@ -372,21 +371,24 @@ double c_ddiff(double r, double theta, double phi, int n1, int n2){
 //---------East-West Wind Component---------//
 //------------and its Derivatives-----------//
 //------------------------------------------//
-double u(double r, double theta, double phi){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double u(double r, double theta, double phi, NaturalCubicSpline_1D &Windu_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     return Eval_Spline_f(r_eval, Windu_Spline);
 }
 
 
-double u_diff(double r, double theta, double phi, int n){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double u_diff(double r, double theta, double phi, int n, NaturalCubicSpline_1D &Windu_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     if(n==0)  return Eval_Spline_df(r_eval, Windu_Spline);
     else        return 0.0;
 }
 
-double u_ddiff(double r, double theta, double phi, int n1, int n2){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double u_ddiff(double r, double theta, double phi, int n1, int n2, NaturalCubicSpline_1D &Windu_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     if(n1==0&&n2==0)    return Eval_Spline_ddf(r_eval, Windu_Spline);
@@ -398,20 +400,23 @@ double u_ddiff(double r, double theta, double phi, int n1, int n2){
 //---------North-South Wind Component---------//
 //-------------and its Derivatives------------//
 //--------------------------------------------//
-double v(double r, double theta, double phi){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double v(double r, double theta, double phi, NaturalCubicSpline_1D &Windv_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     return Eval_Spline_f(r_eval, Windv_Spline);
 }
 
-double v_diff(double r, double theta, double phi, int n){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double v_diff(double r, double theta, double phi, int n, NaturalCubicSpline_1D &Windv_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     if(n==0)   return Eval_Spline_df(r_eval, Windv_Spline);
     else       return 0.0;
 }
 
-double v_ddiff(double r, double theta, double phi, int n1, int n2){
+// Modified to pass in NaturalCubicSpline_1D by reference
+double v_ddiff(double r, double theta, double phi, int n1, int n2, NaturalCubicSpline_1D &Windv_Spline){
     double r_eval = min(r, r_max);  r_eval = max(r_eval, r_min);    // Check that r_min <= r_eval <= r_max
     
     if(n1==0&&n2==0)    return Eval_Spline_ddf(r_eval, Windv_Spline);

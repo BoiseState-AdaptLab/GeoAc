@@ -10,16 +10,44 @@
 
 using namespace std;
 
-//----------------------------------------//
-//------Parameters for Interpolation------//
-//----------------------------------------//
-extern int z_cnt;           // Number of vertical points
-extern double* z_vals;      // z_k elements
+//-------------------------------------//
+//-----------One-Dimensional-----------//
+//-------Interpolation Structure-------//
+//-------------------------------------//
+struct NaturalCubicSpline_1D{
+	int length;			// Length of input files (x and f(x))
+        int accel;          // Index of previous table look up; used to increase spline speed
+	double* x_vals;     // 1D array of x values
+	double* f_vals;     // 1D array of f(x) values, f_vals[i] = f(x[i])
+	double* slopes;     // Slopes used to generate natural cubic spline solution
+};
 
-extern double* T_vals;      // Temperature at z_k
-extern double* u_vals;      // E-W winds at z_k
-extern double* v_vals;      // N-S winds at z_k
-extern double* rho_vals;    // Density at z_k
+// Custom struct used to convert global variables to local variables
+// All variables inside were global
+struct Splines_Struct {
+    //----------------------------------------//
+    //------Parameters for Interpolation------//
+    //----------------------------------------//
+    // Modified to add initialization to 0 
+    int accel = 0;       // Acceleration index
+
+    int r_cnt;           // Number of vertical points
+    double* r_vals;      // r_k elements (r_cnt length)
+    
+    double* T_vals;      // Temperature at z_k
+    double* u_vals;      // E-W winds at z_k
+    double* v_vals;      // N-S winds at z_k
+    double* rho_vals;    // Density at z_k
+
+    //---------------------`-------------------------------//
+    //-------------Combined Function to Input-------------//
+    //------G2S Files and Generate the Interpolation------//
+    //----------------------------------------------------//
+    struct NaturalCubicSpline_1D Temp_Spline;
+    struct NaturalCubicSpline_1D Windu_Spline;
+    struct NaturalCubicSpline_1D Windv_Spline;
+    struct NaturalCubicSpline_1D Density_Spline;
+};
 
 //----------------------------------------//
 //----------File IO Manipulation----------//
@@ -32,21 +60,10 @@ bool Check_G2S_Format(string);      // Function to check that there are columns 
 //----------------------------------------//
 //---------G2S Array Manipulation---------//
 //----------------------------------------//
-void SetUp_G2S_Arrays(char*);           // Take the file prefix in char* and determine r_cnt, z_cnt; Set arrays to appropriate sizes
-void Load_G2S_Single(char*,char*);      // Take the file prefix in char* and r values in file name (string) and load all data into the arrays
-void Clear_G2S_Arrays();                // Clear and delete the G2S arrays
-
-//-------------------------------------//
-//-----------One-Dimensional-----------//
-//-------Interpolation Structure-------//
-//-------------------------------------//
-struct NaturalCubicSpline_1D{
-	int length;			// Length of input files (x and f(x))
-    int accel;          // Index of previous table look up; used to increase spline speed
-	double* x_vals;     // 1D array of x values
-	double* f_vals;     // 1D array of f(x) values, f_vals[i] = f(x[i])
-	double* slopes;     // Slopes used to generate natural cubic spline solution
-};
+//Modified to pass in Splines_Struct by reference
+void SetUp_G2S_Arrays(char*, Splines_Struct&);           // Take the file prefix in char* and determine r_cnt, z_cnt; Set arrays to appropriate sizes
+void Load_G2S_Single(char*,char*, Splines_Struct&);      // Take the file prefix in char* and r values in file name (string) and load all data into the arrays
+void Clear_G2S_Arrays(Splines_Struct&);                // Clear and delete the G2S arrays
 
 //----------------------------------------------//
 //------------Functions to Build and------------//
@@ -70,17 +87,9 @@ double Eval_Spline_f(double, struct NaturalCubicSpline_1D &);    // Evaluate f @
 double Eval_Spline_df(double, struct NaturalCubicSpline_1D &);   // Evaluate df/dx
 double Eval_Spline_ddf(double, struct NaturalCubicSpline_1D &);  // Evaluate d^2f/dx^2
 
-//----------------------------------------------------//
-//-------------Combined Function to Input-------------//
-//------G2S Files and Generate the Interpolation------//
-//----------------------------------------------------//
-extern struct NaturalCubicSpline_1D Temp_Spline;
-extern struct NaturalCubicSpline_1D Windu_Spline;
-extern struct NaturalCubicSpline_1D Windv_Spline;
-extern struct NaturalCubicSpline_1D Density_Spline;
-
-void Spline_Single_G2S(char*, char*);   // Input the profile prefix and r_vals information to create splines of 2D G2S data
-void ClearAll();                        // Function to clear the G2S arrays and slopes from interpolation
+//Modified to pass in Splines_Struct by reference
+void Spline_Single_G2S(char*, char*, Splines_Struct&);   // Input the profile prefix and r_vals information to create splines of 2D G2S data
+void ClearAll(Splines_Struct&);                        // Function to clear the G2S arrays and slopes from interpolation
 
 
 #endif /* G2S_SPLINE2D_H_ */

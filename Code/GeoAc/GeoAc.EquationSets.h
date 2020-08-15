@@ -1,6 +1,9 @@
 #ifndef GEOAC_EQSETS_H_
 #define GEOAC_EQSETS_H_
 
+// Add this include to access Splines_Struct
+#include "../Atmo/G2S_GlobalSpline1D.h"
+
 using namespace std;
 
 //-----------------------------------------------------------//
@@ -49,34 +52,37 @@ void    GeoAc_SetSystem();                                              // Funct
 
 void    GeoAc_SetInitialConditions(double**&);                          // Function sets initial conditions for a source at the origin with launch angles GeoAc_theta, GeoAc_phi
 void    GeoAc_SetInitialConditions(double**&, double, double);          // Function sets initial conditions for a source at (r_0, z_0) with launch angles GeoAc_theta, GeoAc_phi
-// Modified to take GeoAc_ angles by value and GeoAc_Sources_Struct by reference
-void    GeoAc_SetInitialConditions(double**&, double, double, double, double, double, GeoAc_Sources_Struct&);  // Function sets initial conditions for a source at (x_0, y_0, z_0) with launch angles GeoAc_theta, GeoAc_phi
+// Modified to take GeoAc_ angles by value and GeoAc_Sources_Struct and Splines_Struct by reference
+void    GeoAc_SetInitialConditions(double**&, double, double, double, double, double, GeoAc_Sources_Struct&, Splines_Struct&);  // Function sets initial conditions for a source at (x_0, y_0, z_0) with launch angles GeoAc_theta, GeoAc_phi
 
 void    GeoAc_ApproximateIntercept(double**, int, double*&);            // Function uses linear interpolation to estimate ground intercept values
-// Modified to take in GeoAc_Sources_Struct by reference
-void    GeoAc_SetReflectionConditions(double**&, int, GeoAc_Sources_Struct&);                  // Function sets reflection conditions
+// Modified to take in GeoAc_Sources_Struct and Splines_Struct by reference
+void    GeoAc_SetReflectionConditions(double**&, int, GeoAc_Sources_Struct&, Splines_Struct&);                  // Function sets reflection conditions
 
-// Modified to take in GeoAc_Sources_Struct by reference
-void    GeoAc_UpdateSources(double, double*, GeoAc_Sources_Struct&);                           // Function to update source equation parameters which are used multiple times
+// Modified to take in GeoAc_Sources_Struct and Splines_Struct by reference
+void    GeoAc_UpdateSources(double, double*, GeoAc_Sources_Struct&, Splines_Struct&);                           // Function to update source equation parameters which are used multiple times
 double  GeoAc_Set_ds(double*);                                          // Function to modify the solver step size
 // Modified to take in GeoAc_Sources_Struct by reference
 double  GeoAc_EvalSrcEq(double, double*, int, GeoAc_Sources_Struct&);                          // Function to evaluate the source equations
 
-double  GeoAc_EvalHamiltonian(double, double*);                         // Function to evaluate the hamiltonian (eikonal) at s, current_values
-// Modified to take in GeoAc_Sources_Struct by reference
-double  GeoAc_EvalHamiltonian(double**, int, GeoAc_Sources_Struct&);                           // Function to evaluate the hamiltonian at index of solution**
+// Modified to take in Splines_Struct by reference
+double  GeoAc_EvalHamiltonian(double, double*, Splines_Struct&);                         // Function to evaluate the hamiltonian (eikonal) at s, current_values
+// Modified to take in GeoAc_Sources_Struct and Splines_Struct by reference
+double  GeoAc_EvalHamiltonian(double**, int, GeoAc_Sources_Struct&, Splines_Struct&);                           // Function to evaluate the hamiltonian at index of solution**
 
 // Modified to take in GeoAc_Sources_Struct by reference
 bool    GeoAc_BreakCheck(double **, int, GeoAc_Sources_Struct&);                               // Function to check for ray leaving propagation region
 bool    GeoAc_GroundCheck(double **, int);                              // Function to check for ray returning to ground
 
-double  GeoAc_TravelTime(double **, int);                               // Function to calculate travel time from ray origin to s = ds * index
-void    GeoAc_TravelTimeSegment(double&, double**, int, int);           // Function increment travel time from ds*k_1 to d2*k_2
-double  GeoAc_SB_Atten(double **, int, double);                         // Function to calculate atmospheric attenuation through a ray path
-void    GeoAc_SB_AttenSegment(double&, double **, int , int, double);   // Function to increment atmospheric attenuation through a ray path
-double  GeoAc_Jacobian(double **, int);                                 // Function to calculate the Jacobian determinant
-// Modified to take GeoAc_ angles by value and GeoAc_Sources_Struct by reference
-double  GeoAc_Amplitude(double **, int, double, double, GeoAc_Sources_Struct&);                                // Function to calculate the transport equation coefficient
-int     GeoAc_CausticCnt(double **, int, int);                          // Function to count caustics from ray origin to s = ds * index
+// Modified to take in Splines_Struct by reference
+double  GeoAc_TravelTime(double **, int, Splines_Struct&);                               // Function to calculate travel time from ray origin to s = ds * index
+void    GeoAc_TravelTimeSegment(double&, double**, int, int, Splines_Struct&);           // Function increment travel time from ds*k_1 to d2*k_2
+double  GeoAc_SB_Atten(double **, int, double, Splines_Struct&);                         // Function to calculate atmospheric attenuation through a ray path
+void    GeoAc_SB_AttenSegment(double&, double **, int , int, double, Splines_Struct&);   // Function to increment atmospheric attenuation through a ray path
+double  GeoAc_Jacobian(double **, int, Splines_Struct&);                                 // Function to calculate the Jacobian determinant
+// Modified to take GeoAc_ angles by value and GeoAc_Sources_Struct and Splines_Struct by reference
+double  GeoAc_Amplitude(double **, int, double, double, GeoAc_Sources_Struct&, Splines_Struct&);                                // Function to calculate the transport equation coefficient
+// Modified to take in Splines_Struct by reference
+int     GeoAc_CausticCnt(double **, int, int, Splines_Struct&);                          // Function to count caustics from ray origin to s = ds * index
 
 #endif /* GEOAC_EQSETS_H_ */

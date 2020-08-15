@@ -9,9 +9,12 @@
 #include <sstream>
 
 #include "GeoAc.Parameters.h"
-#include "Atmo_State.h"
 #include "GeoAc.EquationSets.h"
 #include "GeoAc.Solver.h"
+
+// Edit/add these includes to access Splines_Struct
+#include "../Atmo/Atmo_State.h"
+#include "../Atmo/G2S_GlobalSpline1D.h"
 
 using namespace std;
 
@@ -75,7 +78,8 @@ void GeoAc_DeleteSolutionArray(double ** & solution, int length){
 //-------------------------------------------------//
 //---------Functions To Output The Profile---------//
 //-------------------------------------------------//
-void GeoAc_WriteProfile(string file_name, double azimuth){
+// Modified these functions to take in Splines_Struct by reference
+void GeoAc_WriteProfile(string file_name, double azimuth, Splines_Struct &splines){
 	ofstream file_out;	file_out.open(file_name.c_str() );
     
 	if(!file_out.is_open()){
@@ -84,19 +88,19 @@ void GeoAc_WriteProfile(string file_name, double azimuth){
         for(int m = 0; m < 1400; m++){
             double r0 = r_earth + m/10.0;
             file_out << r0 << '\t';
-            file_out << pow(c(r0,Pi/4.0, 0)*1000.0,2)/(R*gam) << '\t';
-            file_out << u(r0,Pi/4.0, 0)*1000.0 << '\t';
-            file_out << v(r0,Pi/4.0, 0)*1000.0 << '\t';
-            file_out << rho(r0,Pi/4.0, 0) << '\t';
-            file_out << rho(r0, Pi/4.0, 0) * pow(c(r0,Pi/4.0, 0) * 1000.0, 2) / gam * 10.0 << '\t';
-            file_out << c(r0,Pi/4.0,0) << '\t';
-            file_out << c(r0,Pi/4.0,0) + cos((azimuth)*Pi/180.0)*u(r0,Pi/4.0,0) + sin((azimuth)*Pi/180.0)*v(r0,Pi/4.0,0) << '\n';
+            file_out << pow(c(r0,Pi/4.0, 0,splines.Temp_Spline)*1000.0,2)/(R*gam) << '\t';
+            file_out << u(r0,Pi/4.0, 0, splines.Windu_Spline)*1000.0 << '\t';
+            file_out << v(r0,Pi/4.0, 0, splines.Windv_Spline)*1000.0 << '\t';
+            file_out << rho(r0,Pi/4.0, 0, splines.Density_Spline) << '\t';
+            file_out << rho(r0, Pi/4.0, 0, splines.Density_Spline) * pow(c(r0,Pi/4.0, 0, splines.Temp_Spline) * 1000.0, 2) / gam * 10.0 << '\t';
+            file_out << c(r0,Pi/4.0,0,splines.Temp_Spline) << '\t';
+            file_out << c(r0,Pi/4.0,0,splines.Temp_Spline) + cos((azimuth)*Pi/180.0)*u(r0,Pi/4.0,0, splines.Windu_Spline) + sin((azimuth)*Pi/180.0)*v(r0,Pi/4.0,0, splines.Windv_Spline) << '\n';
         }
         file_out.close();
     }
 }
 
-void GeoAc_WriteProfile(string file_name, double lat_src, double lon_src, double azimuth){
+void GeoAc_WriteProfile(string file_name, double lat_src, double lon_src, double azimuth, Splines_Struct &splines){
 	ofstream file_out;	file_out.open(file_name.c_str() );
     
 	if(!file_out.is_open()){
@@ -105,13 +109,13 @@ void GeoAc_WriteProfile(string file_name, double lat_src, double lon_src, double
         for(int m = 0; m < 1400; m++){
             double r0 = r_earth + m/10.0;
             file_out << r0 << '\t';
-            file_out << pow(c(r0,lat_src, lon_src)*1000.0,2)/(R*gam) << '\t';
-            file_out << u(r0,lat_src,lon_src)*1000.0 << '\t';
-            file_out << v(r0,lat_src,lon_src)*1000.0 << '\t';
-            file_out << rho(r0,lat_src,lon_src) << '\t';
-            file_out << rho(r0,lat_src,lon_src)*pow(c(r0,lat_src, lon_src) * 1000.0, 2) / gam * 10.0 << '\t';
-            file_out << c(r0,lat_src,lon_src) << '\t';
-            file_out << c(r0,lat_src,lon_src) + cos((azimuth)*Pi/180.0)*u(r0,lat_src,lon_src) + sin((azimuth)*Pi/180.0)*v(r0,lat_src,lon_src) << '\n';
+            file_out << pow(c(r0,lat_src, lon_src,splines.Temp_Spline)*1000.0,2)/(R*gam) << '\t';
+            file_out << u(r0,lat_src,lon_src, splines.Windu_Spline)*1000.0 << '\t';
+            file_out << v(r0,lat_src,lon_src, splines.Windv_Spline)*1000.0 << '\t';
+            file_out << rho(r0,lat_src,lon_src, splines.Density_Spline) << '\t';
+            file_out << rho(r0,lat_src,lon_src, splines.Density_Spline)*pow(c(r0,lat_src, lon_src,splines.Temp_Spline) * 1000.0, 2) / gam * 10.0 << '\t';
+            file_out << c(r0,lat_src,lon_src,splines.Temp_Spline) << '\t';
+            file_out << c(r0,lat_src,lon_src,splines.Temp_Spline) + cos((azimuth)*Pi/180.0)*u(r0,lat_src,lon_src, splines.Windu_Spline) + sin((azimuth)*Pi/180.0)*v(r0,lat_src,lon_src, splines.Windv_Spline) << '\n';
         }
         file_out.close();
     }

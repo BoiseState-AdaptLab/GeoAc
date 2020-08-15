@@ -123,7 +123,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     tweak_abs=0.3;
     
     for(int i = 3; i < count; i++) if (strncmp(inputs[i], "profile_format=",15) == 0){ ProfileFormat = inputs[i]+15;}
-    Spline_Single_G2S(inputs[2],ProfileFormat); // Load profile into spline
+
+    // We have to create the Splines_Struct here to set it up
+    Splines_Struct splines;
+    Spline_Single_G2S(inputs[2],ProfileFormat, splines); // Load profile into spline
     
     for(int i = 3; i < count; i++){
         if (strncmp(inputs[i], "theta_min=",10) == 0){              theta_min = atof(inputs[i]+10);}
@@ -180,7 +183,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 	char output_buffer [60];
 	
     // Write the profile to file if neceessary
-    if(WriteAtmo) GeoAc_WriteProfile("atmo.dat", 90.0 - phi_min);
+    if(WriteAtmo) GeoAc_WriteProfile("atmo.dat", 90.0 - phi_min, splines);
        
 	ofstream results;
     ofstream raypath;
@@ -257,33 +260,33 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             double GeoAc_theta = theta*Pi/180.0;
             
             GeoAc_SetInitialConditions(solution, z_src, lat_src*Pi/180.0, lon_src*Pi/180.0,
-                                       GeoAc_theta, GeoAc_phi, sources);
+                                       GeoAc_theta, GeoAc_phi, sources, splines);
             travel_time_sum = 0.0;
             attenuation = 0.0;
             r_max = 0.0;
             
             for(int bnc_cnt = 0; bnc_cnt <= bounces; bnc_cnt++){
                 
-                k = GeoAc_Propagate_RK4(solution, BreakCheck, sources);
+                k = GeoAc_Propagate_RK4(solution, BreakCheck, sources, splines);
                 
                 if(WriteRays || WriteCaustics){
                     if(WriteCaustics){
                         sprintf(output_buffer, "%s_caustics-path%i.dat", file_title, bnc_cnt);
                         caustics.open(output_buffer,fstream::app);
                     
-                        D_prev = GeoAc_Jacobian(solution,1);
+                        D_prev = GeoAc_Jacobian(solution,1, splines);
                     }
                     
                     for(int m = 1; m < k ; m++){     // write profiles to data files and vector arrays
-                        if(WriteCaustics) D = GeoAc_Jacobian(solution,m);
-                        GeoAc_TravelTimeSegment(travel_time_sum, solution, m-1,m);
-                        GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq);
+                        if(WriteCaustics) D = GeoAc_Jacobian(solution,m,splines);
+                        GeoAc_TravelTimeSegment(travel_time_sum, solution, m-1,m, splines);
+                        GeoAc_SB_AttenSegment(attenuation, solution, m-1, m, freq, splines);
                         
                         if(WriteRays && m % 25 == 0){
                             raypath << solution[m][0] - r_earth;
                             raypath << '\t' << setprecision(8) << solution[m][1] * 180.0/Pi;
                             raypath << '\t' << setprecision(8) << solution[m][2] * 180.0/Pi;
-                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi,sources));}
+                            if(CalcAmp){    raypath << '\t' << 20.0*log10(GeoAc_Amplitude(solution,m,GeoAc_theta,GeoAc_phi,sources, splines));}
                             else{           raypath << '\t' << 0.0;}
                             raypath << '\t' << -attenuation;
                             raypath << '\t' << travel_time_sum << '\n';
@@ -299,8 +302,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                     }
                     if(WriteCaustics) caustics.close();
                 } else {
-                    travel_time_sum+= GeoAc_TravelTime(solution, k);
-                    attenuation+= GeoAc_SB_Atten(solution,k,freq);
+                    travel_time_sum+= GeoAc_TravelTime(solution, k, splines);
+                    attenuation+= GeoAc_SB_Atten(solution,k,freq, splines);
                 }
                 
                 if(BreakCheck) break;
@@ -309,7 +312,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 double GC_Dist1 = pow(sin((solution[k][1] - lat_src*Pi/180.0)/2.0),2);
                 double GC_Dist2 = cos(lat_src*Pi/180.0) * cos(solution[k][1]) * pow(sin((solution[k][2] - lon_src*Pi/180.0)/2.0),2);
                 
-                double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2]) / c(r_earth + z_src, lat_src*Pi/180.0, lon_src*Pi/180.0) * solution[k][3]) * 180.0 / Pi;
+                double inclination = - asin(c(solution[k][0], solution[k][1], solution[k][2], splines.Temp_Spline) / c(r_earth + z_src, lat_src*Pi/180.0, lon_src*Pi/180.0, splines.Temp_Spline) * solution[k][3]) * 180.0 / Pi;
                 double back_az = 90.0 - atan2(-solution[k][4], -solution[k][5]) * 180.0 / Pi;
                 if(back_az < -180.0) back_az +=360.0;
                 if(back_az >  180.0) back_az -=360.0;
@@ -324,12 +327,12 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 results << '\t' << r_max;
                 results << '\t' << inclination;
                 results << '\t' << back_az;
-                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi,sources));}
+                if(CalcAmp){    results << '\t' << 20.0*log10(GeoAc_Amplitude(solution,k,GeoAc_theta,GeoAc_phi,sources, splines));}
                 else{           results << '\t' << 0.0;}
                 results << '\t' << -attenuation;
                 results << '\n';
                 
-                GeoAc_SetReflectionConditions(solution,k, sources);	
+                GeoAc_SetReflectionConditions(solution,k, sources, splines);	
             }
             if(WriteRays){raypath << '\n';}
             GeoAc_ClearSolutionArray(solution,k);

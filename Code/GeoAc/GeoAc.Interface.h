@@ -7,6 +7,9 @@
 #include <string>
 #include <sstream>
 
+// Add this include to acces Splines_Struct
+#include "../Atmo/G2S_GlobalSpline1D.h"
+
 using namespace std;
 
 //--------------------------------------//
@@ -25,8 +28,9 @@ void GeoAc_DeleteSolutionArray(double ** &, int);
 //-------------------------------------------------//
 //---------Functions To Output The Profile---------//
 //-------------------------------------------------//
-void GeoAc_WriteProfile(string, double);
-void GeoAc_WriteProfile(string, double, double, double);
+// Modified to take in Splines_Struct by reference
+void GeoAc_WriteProfile(string, double, Splines_Struct&);
+void GeoAc_WriteProfile(string, double, double, double, Splines_Struct&);
 
 //------------------------------------------------------//
 //---------Functions To Use Command Line Inputs---------//
