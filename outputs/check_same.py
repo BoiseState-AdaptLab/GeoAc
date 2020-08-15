@@ -13,10 +13,14 @@ def check_files(file_1, file_2):
   
   # Check each file's bytes
   with open(file_1, 'rb') as file1, open(file_2, 'rb') as file2:
-    if file1.read() == file2.read():
+    d1, d2 = file1.readlines(), file2.readlines()
+    if d1 == d2:
       print("Files are the same")
     else:
-      print("Files are different")
+      print("Files are different on lines:")
+      for i, (l1, l2) in enumerate(zip(d1, d2)):
+        if l1 != l2:
+            print(i)
 
 if __name__ == "__main__":
   if len(sys.argv) < 3:

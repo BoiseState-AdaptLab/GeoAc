@@ -1,5 +1,5 @@
 CC= g++
-CFLAGS=  -Wno-write-strings
+CFLAGS=  -Wno-write-strings -pg -fopenmp
 
 MAINS_DIR= Code/
 ATMO_DIR=  Code/Atmo/
