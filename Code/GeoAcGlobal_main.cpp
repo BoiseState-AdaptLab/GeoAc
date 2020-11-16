@@ -122,8 +122,13 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     char input_check;
     z_grnd=0.0;
     tweak_abs=0.3;
-    
-    for(int i = 3; i < count; i++) if (strncmp(inputs[i], "profile_format=",15) == 0){ ProfileFormat = inputs[i]+15;}
+   
+    // skip executable name, and -prop, and filename
+    for(int i = 3; i < count; i++) 
+      if (strncmp(inputs[i], "profile_format=",15) == 0){
+        ProfileFormat = inputs[i]+15;
+      }
+
     // Create and load a new SplineStruct (see Code/Atmo/G2S_GlobalSpine1D.h)
     // Each thread will get its own copy
     SplineStruct splines;
@@ -132,45 +137,65 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
     
     for(int i = 3; i < count; i++){
-        if (strncmp(inputs[i], "theta_min=",10) == 0){              theta_min = atof(inputs[i]+10);}
-        else if (strncmp(inputs[i], "theta_max=",10) == 0){         theta_max = atof(inputs[i]+10);}
-        else if (strncmp(inputs[i], "theta_step=",11) == 0){        theta_step = atof(inputs[i]+11);}
-        else if (strncmp(inputs[i], "phi_min=",8) == 0){            phi_min = atof(inputs[i]+8);}
-        else if (strncmp(inputs[i], "phi_max=",8) == 0){            phi_max = atof(inputs[i]+8);}
-        else if (strncmp(inputs[i], "phi_step=",9) == 0){           phi_step = atof(inputs[i]+9);}
+        if (strncmp(inputs[i], "theta_min=",10) == 0){
+            theta_min = atof(inputs[i]+10);}
+        else if (strncmp(inputs[i], "theta_max=",10) == 0){
+            theta_max = atof(inputs[i]+10);}
+        else if (strncmp(inputs[i], "theta_step=",11) == 0){
+            theta_step = atof(inputs[i]+11);}
+        else if (strncmp(inputs[i], "phi_min=",8) == 0){
+            phi_min = atof(inputs[i]+8);}
+        else if (strncmp(inputs[i], "phi_max=",8) == 0){
+            phi_max = atof(inputs[i]+8);}
+        else if (strncmp(inputs[i], "phi_step=",9) == 0){
+           phi_step = atof(inputs[i]+9);}
         else if (strncmp(inputs[i], "azimuth=",8) == 0){
             phi_min = atof(inputs[i]+8);
             phi_max = atof(inputs[i]+8);
             phi_step = 1.0;
-        }
-        else if (strncmp(inputs[i], "bounces=",8) == 0){            bounces = atoi(inputs[i]+8);}
-        else if (strncmp(inputs[i], "lat_src=",8) == 0){            lat_src = atof(inputs[i]+8);}
-        else if (strncmp(inputs[i], "lon_src=",8) == 0){            lon_src = atof(inputs[i]+8);}
-        else if (strncmp(inputs[i], "z_src=",6) == 0){              z_src = atof(inputs[i]+6);}
-        else if (strncmp(inputs[i], "z_grnd=",7) == 0){             z_grnd = atof(inputs[i]+7);}
-        else if (strncmp(inputs[i], "WriteAtmo=",10) == 0){         WriteAtmo = string2bool(inputs[i]+10);}
-        else if (strncmp(inputs[i], "WriteRays=",10) == 0){         WriteRays = string2bool(inputs[i]+10);}
-
-        else if (strncmp(inputs[i], "freq=",5) == 0){               freq = atof(inputs[i]+5);}
-        else if (strncmp(inputs[i], "abs_coeff=",10) == 0){         tweak_abs = max(0.0, atof(inputs[i]+10));}
-        else if (strncmp(inputs[i], "z_grnd=",7) == 0){             z_grnd = atof(inputs[i]+7);}
-        else if (strncmp(inputs[i], "profile_format=",15) == 0){    ProfileFormat = inputs[i]+15;}
-        else if (strncmp(inputs[i], "WriteCaustics=",14) == 0){     WriteCaustics = string2bool(inputs[i]+14);}
-        else if (strncmp(inputs[i], "CalcAmp=",8) == 0){            CalcAmp = string2bool(inputs[i]+8);}
-        else if (strncmp(inputs[i], "alt_max=",8) == 0){            GeoAc_vert_limit = atof(inputs[i]+8);}
-        else if (strncmp(inputs[i], "rng_max=",8) == 0){            GeoAc_range_limit = atof(inputs[i]+8);}
-        else{
-            cout << "***WARNING*** Unrecognized parameter entry: " << inputs[i] << '\n';
-            cout << "Continue? (y/n):"; cin >> input_check;
-            if(input_check!='y' && input_check!='Y') return; //TODO: No inputs
-        }
+        }else if (strncmp(inputs[i], "bounces=",8) == 0){
+            bounces = atoi(inputs[i]+8);
+        }else if (strncmp(inputs[i], "lat_src=",8) == 0){
+            lat_src = atof(inputs[i]+8);
+       }else if (strncmp(inputs[i], "lon_src=",8) == 0){
+            lon_src = atof(inputs[i]+8);
+       }else if (strncmp(inputs[i], "z_src=",6) == 0){
+              z_src = atof(inputs[i]+6);
+       } else if (strncmp(inputs[i], "z_grnd=",7) == 0){
+             z_grnd = atof(inputs[i]+7);
+       } else if (strncmp(inputs[i], "WriteAtmo=",10) == 0){
+         WriteAtmo = string2bool(inputs[i]+10);
+       } else if (strncmp(inputs[i], "WriteRays=",10) == 0){
+         WriteRays = string2bool(inputs[i]+10);
+       } else if (strncmp(inputs[i], "freq=",5) == 0){
+               freq = atof(inputs[i]+5);
+       } else if (strncmp(inputs[i], "abs_coeff=",10) == 0){
+         tweak_abs = max(0.0, atof(inputs[i]+10));
+       } else if (strncmp(inputs[i], "z_grnd=",7) == 0){
+             z_grnd = atof(inputs[i]+7);
+      } else if (strncmp(inputs[i], "profile_format=",15) == 0){
+          ProfileFormat = inputs[i]+15;
+      } else if (strncmp(inputs[i], "WriteCaustics=",14) == 0){
+           WriteCaustics = string2bool(inputs[i]+14);
+      } else if (strncmp(inputs[i], "CalcAmp=",8) == 0){
+              CalcAmp = string2bool(inputs[i]+8);
+      } else if (strncmp(inputs[i], "alt_max=",8) == 0){
+            GeoAc_vert_limit = atof(inputs[i]+8);
+      } else if (strncmp(inputs[i], "rng_max=",8) == 0){
+             GeoAc_range_limit = atof(inputs[i]+8);
+      } else{
+       cout<<"***WARNING*** Unrecognized parameter entry: "<<inputs[i]<< '\n';
+       cout << "Continue? (y/n):"; cin >> input_check;
+       if(input_check!='y' && input_check!='Y') return; //TODO: No inputs
+      }
     }
     z_src=max(z_src,z_grnd);
     if(WriteCaustics) CalcAmp=true;
     // This also sets GeoAc_EqCnt
     GeoAc_ConfigureCalcAmp(CalcAmp);
     
-    // Extract the file name from the input and use it to distinguish the resulting output
+    // Extract the file name from the input and
+    // use it to distinguish the resulting output
     char file_title[50];
     for(int m = 0; m < 50; m++){
         if(inputs[2][m]=='.'){
@@ -231,7 +256,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     // Each thread needs its own struct to modify and read from
     SplineStruct spline_structs[num_threads];
     for (int i = 0; i < num_threads; i++){
-        spline_structs[i] = splines;
+
+        // Load profile into spline
+        Spline_Single_G2S(inputs[2],ProfileFormat, spline_structs[i]);  
+
         //cout << splines.Temp_Spline.length << " = " << spline_structs[i].Temp_Spline.length << endl;
         //cout << sizeof(splines.Temp_Spline.x_vals) / sizeof(splines.Temp_Spline.x_vals[0]) << endl;
     }
@@ -245,7 +273,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
  
     // Start parallel, set out variables that can be shared - constants, 
     // information variables, angle variables, output_variables
-    #pragma omp parallel
+    #pragma omp parallel default(shared)
 /*default(none) shared(cout, cerr, r_earth, Pi, \
      solutions, length, bounces, freq, lat_src, lon_src, z_src, \
      phi_min, phi_max, phi_step, theta_min, theta_max, theta_step, \
