@@ -287,7 +287,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       double* solution = new double[GeoAc_EqCnt];
 
       //Get this thread's struct from the array
-      SplineStruct splines = spline_structs[tid];
+      SplineStruct spl = spline_structs[tid];
 
       //cout << "In Thread r_vals = " << splines.r_vals[0] << endl;
 
@@ -322,7 +322,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
             
               double** temp = &solution;
-              GeoAc_SetInitialConditions(temp, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources, splines);
+              GeoAc_SetInitialConditions(temp, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources, spl);
 
               //cout << "\nPrinting sources struct. Thread id: " << tid << endl;
               //PRINTSTRUCT(sources);
@@ -334,7 +334,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               for(int bnc_cnt = 0; bnc_cnt <= bounces; bnc_cnt++){
                   double* final_vals = GeoAc_Propagate_RK4_2(solution, r_max, travel_time_sum, attenuation,
                                                     GeoAc_theta, GeoAc_phi, freq, CalcAmp, sources, 
-                                                    splines, WriteRays ? &(raypaths[tid]) : nullptr,
+                                                    spl, WriteRays ? &(raypaths[tid]) : nullptr,
                                                     WriteCaustics ? &(caustics[tid][bnc_cnt]) : nullptr);
 
                   if (final_vals == nullptr) break;
@@ -392,7 +392,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   double GC_Dist1 = pow(sin((final_vals[1] - lat_src)/2.0),2);
                   double GC_Dist2 = cos(lat_src) * cos(final_vals[1]) * pow(sin((final_vals[2] - lon_src)/2.0),2);
                 
-                  double inclination = - asin(c(final_vals[0], final_vals[1], final_vals[2], splines.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, splines.Temp_Spline) * final_vals[3]) * TO_DEG;
+                  double inclination = - asin(c(final_vals[0], final_vals[1], final_vals[2], spl.Temp_Spline) / c(r_earth + z_src, lat_src, lon_src, spl.Temp_Spline) * final_vals[3]) * TO_DEG;
                   double back_az = 90.0 - atan2(-final_vals[4], -final_vals[5]) * TO_DEG;
                   if(back_az < -180.0) back_az +=360.0;
                   if(back_az >  180.0) back_az -=360.0;
@@ -407,7 +407,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   results[tid] << '\t' << r_max;
                   results[tid] << '\t' << inclination;
                   results[tid] << '\t' << back_az;
-                  if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(&final_vals,0,GeoAc_theta,GeoAc_phi,sources, splines));}
+                  if(CalcAmp){    results[tid] << '\t' << 20.0*log10(GeoAc_Amplitude(&final_vals,0,GeoAc_theta,GeoAc_phi,sources, spl));}
                   else{           results[tid] << '\t' << 0.0;}
                   results[tid] << '\t' << -attenuation;
                   results[tid] << '\n';                
