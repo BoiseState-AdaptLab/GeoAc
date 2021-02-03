@@ -16,6 +16,10 @@
 #include "GeoAc/GeoAc.Interface.h"
 #include "GeoAc/GeoAc.Eigenray.h"
 
+#include <netcdf>
+using namespace netCDF;
+using namespace netCDF::exceptions;
+
 using namespace std;
 
 void GeoAcGlobal_Usage(){ 
@@ -258,8 +262,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     for (int i = 0; i < num_threads; i++){
 
         // Load profile into spline
-        Spline_Single_G2S(inputs[2],ProfileFormat, spline_structs[i]);  
-
+        //Spline_Single_G2S(inputs[2],ProfileFormat, spline_structs[i]);  
+        spline_structs[i] = splines;
         //cout << splines.Temp_Spline.length << " = " << spline_structs[i].Temp_Spline.length << endl;
         //cout << sizeof(splines.Temp_Spline.x_vals) / sizeof(splines.Temp_Spline.x_vals[0]) << endl;
     }
@@ -274,11 +278,12 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     // Start parallel, set out variables that can be shared - constants, 
     // information variables, angle variables, output_variables
     #pragma omp parallel default(shared)
-/*default(none) shared(cout, cerr, r_earth, Pi, \
+   /*default(none) shared(cout, cerr, r_earth, Pi, \
      solutions, length, bounces, freq, lat_src, lon_src, z_src, \
      phi_min, phi_max, phi_step, theta_min, theta_max, theta_step, \
      WriteRays, WriteCaustics, CalcAmp, results, raypaths, caustics, spline_structs) \
-     private(k)*/
+     private(k)
+    */
     {
       
       int tid = omp_get_thread_num();
@@ -307,19 +312,41 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         {0.0, 0.0, 0.0}, {{0.0, 0.0}, {0.0, 0.0}, {0.0, 0.0}}
       };
 
-      const int max_val = phi_max;
-      const int step = phi_step;
+      //const int max_val = phi_max;
+      //const int step = phi_step;
+
+      //calculate loop bounds for outer phi loop
+      int phi_bounds = int((phi_max - phi_min) / phi_step);
+      //cout << "phi_bounds= " << phi_bounds << endl;
+
+      //calculate loop bounds for inner theta loop
+      int theta_bounds = ceil((theta_max - theta_min) / theta_step);
+      //cout << "theta_bounds= " << theta_bounds << endl;
+
+      double theta = theta_min;
+      //cout << "theta= " << theta << endl;
+      //cout << "theta_step= " << theta_step << endl;
+      
       #pragma omp for
-      for(int phi = phi_min; phi <= max_val; phi+=step){
+      //for(int phi = phi_min; phi <= max_val; phi+=step){
+      for(int i = 0; i  <= phi_bounds; i++){
+          double phi = phi_min + phi_step*i;
+          //cout << "phi= " << phi << endl;
+          //cout << "phi_step= " << phi_step << endl;
+          cout << "In phi loop: phi= " << phi << " phi_step=" << phi_step << endl;
+          
+          theta = theta_min;
           //cout << "in phi for loop " << phi << tid << endl;
           //cout << &sources << endl;
-          for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
+          //for(int theta = theta_min;   theta <= theta_max; theta+=theta_step){
+          for(int j = 0; j <= theta_bounds; j++){
+              //cout << "In theta loop: theta= " << theta << " theta_step=" << theta_step << endl;
               int k;
             
               //cout << "in theta for loop " << tid << endl;
               cout << "Plotting ray path w/ theta = " << theta << ", phi = " << phi << '\n';
-              double GeoAc_theta = double(theta)*TO_RAD;
-              double GeoAc_phi = Pi/2.0 - double(phi)*TO_RAD;
+              double GeoAc_theta = theta*TO_RAD;
+              double GeoAc_phi = Pi/2.0 - (phi*TO_RAD);
             
               double** temp = &solution;
               GeoAc_SetInitialConditions(temp, z_src, lat_src, lon_src, GeoAc_theta, GeoAc_phi, sources, spl);
@@ -337,7 +364,9 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                                                     spl, WriteRays ? &(raypaths[tid]) : nullptr,
                                                     WriteCaustics ? &(caustics[tid][bnc_cnt]) : nullptr);
 
-                  if (final_vals == nullptr) break;
+                  if (final_vals == nullptr) {
+                    break;
+                  }
 
                   //cerr << "in bounce for loop " << tid << endl;
                 
@@ -413,6 +442,8 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                   results[tid] << '\n';                
               }
               if(WriteRays){raypaths[tid] << '\n';}
+              theta += theta_step;
+              //cout << "New theta= " << theta << endl;
           }
           results[tid] << '\n';
           //GeoAc_ClearSolutionArray(solution, k);
@@ -424,6 +455,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       for (int i = 0; i < bounces; i++){
           caustics[tid][i].close();
       }
+      
       //GeoAc_DeleteSolutionArray(solution, length);
     }// End omp parallelization
 
@@ -511,6 +543,46 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     for (int j = 0; j < bounces; j++){
         final_caustics[j].close();
     }
+    
+  //TESTING NETCDF
+  // We are writing 2D data, a 6 x 6 grid. 
+  static const int NX = 6;
+  static const int NY = 6;
+
+  // Return this in event of a problem.
+  static const int NC_ERR = 2;
+  try
+    {  
+      // Create the file. The Replace parameter tells netCDF to overwrite
+      // this file, if it already exists.
+      NcFile dataFile("test_netcdf.nc", NcFile::replace);
+      
+      // Create netCDF dimensions
+      NcDim xDim = dataFile.addDim("x", NX);
+      NcDim yDim = dataFile.addDim("y", NY);
+      
+      // Define the variable. The type of the variable in this case is
+      // ncInt (32-bit integer).
+      vector<NcDim> dims;
+      dims.push_back(xDim);
+      dims.push_back(yDim);
+      NcVar data = dataFile.addVar("data", ncInt, dims);
+   
+      // Write the data to the file. Although netCDF supports
+      // reading and writing subsets of data, in this case we write all
+      // the data in one operation.
+      //data.putVar(dataOut);
+      
+      // The file will be automatically close when the NcFile object goes
+      // out of scope. This frees up any internal netCDF resources
+      // associated with the file, and flushes any buffers.
+      
+    }
+  catch(NcException& e)
+    {e.what();
+      cout << "NC_ERR: " << NC_ERR <<endl;
+    }
+
 }
 
 /*
