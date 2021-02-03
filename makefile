@@ -17,7 +17,7 @@ GeoAc3D.RngDep:
 	${CC}  ${ATMO_DIR}G2S_MultiDimSpline3D.cpp ${ATMO_DIR}Atmo_State.Absorption.cpp ${GEOAC_DIR}GeoAc.Parameters.RngDep.cpp ${GEOAC_DIR}GeoAc.Eigenray.cpp ${GEOAC_DIR}GeoAc.EquationSets.3DRngDep.cpp ${GEOAC_DIR}GeoAc.Solver.cpp ${GEOAC_DIR}GeoAc.Interface.cpp ${MAINS_DIR}GeoAc3D.RngDep_main.cpp ${CFLAGS} -o GeoAc3D.RngDep 
 
 GeoAcGlobal:
-	${CC}  ${ATMO_DIR}G2S_GlobalSpline1D.cpp ${ATMO_DIR}Atmo_State.Absorption.Global.cpp ${GEOAC_DIR}GeoAc.Parameters.Global.cpp ${GEOAC_DIR}GeoAc.Eigenray.Global.cpp ${GEOAC_DIR}GeoAc.EquationSets.Global.cpp ${GEOAC_DIR}GeoAc.Solver.cpp ${GEOAC_DIR}GeoAc.Interface.Global.cpp ${MAINS_DIR}GeoAcGlobal_main.cpp ${CFLAGS} -o GeoAcGlobal
+	${CC}  ${ATMO_DIR}G2S_GlobalSpline1D.cpp ${ATMO_DIR}Atmo_State.Absorption.Global.cpp ${GEOAC_DIR}GeoAc.Parameters.Global.cpp ${GEOAC_DIR}GeoAc.Eigenray.Global.cpp ${GEOAC_DIR}GeoAc.EquationSets.Global.cpp ${GEOAC_DIR}GeoAc.Solver.cpp ${GEOAC_DIR}GeoAc.Interface.Global.cpp ${MAINS_DIR}GeoAcGlobal_main.cpp ${CFLAGS} -o GeoAcGlobal `ncxx4-config --cflags --libs`
 
 IonoseisGeoAc:
 	${CC}  ${ATMO_DIR}G2S_GlobalSpline1D.cpp ${ATMO_DIR}Atmo_State.Absorption.Global.cpp ${GEOAC_DIR}GeoAc.Parameters.Global.cpp ${GEOAC_DIR}GeoAc.Eigenray.Global.cpp ${GEOAC_DIR}GeoAc.EquationSets.Global.cpp ${GEOAC_DIR}GeoAc.Solver.cpp ${GEOAC_DIR}GeoAc.Interface.Global.cpp ${MAINS_DIR}IonoseisGeoAc.cpp -I/cm/shared/apps/netcdf_441/include/ -L/cm/shared/apps/netcdf_441/lib/ -lnetcdf ${CFLAGS} -o IonoseisGeoAc
