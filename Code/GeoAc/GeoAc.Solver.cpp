@@ -5,6 +5,10 @@
 #include <iostream>
 #include <omp.h>
 
+#include <netcdf>
+using namespace netCDF;
+using namespace netCDF::exceptions;
+
 #include "GeoAc.Parameters.h"
 #include "../Atmo/Atmo_State.h"
 #include "../Atmo/G2S_GlobalSpline1D.h"
@@ -12,6 +16,9 @@
 
 using namespace std;
 
+
+//Original RK4 function. This is not used for the OpenMP implementation!
+//See the RK4_2 function further down. 
 int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct &sources, SplineStruct &splines){
         
 	int k = 0;	// Integer to track ending index of solution
@@ -63,36 +70,16 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
                 for (int i = 0; i < GeoAc_EqCnt; i++){
                         temp4[i] = ds*GeoAc_EvalSrcEq(s+ds, partial3, i, sources);
                         solution[k+1][i] = solution[k][i] + temp1[i]/6.0 + temp2[i]/3.0 + temp3[i]/3.0 + temp4[i]/6.0;
-/*                        if (isnan(solution[k+1][i]) & !isnan(solution[k][i])){
-                            cout << k << ", " << i << ": ";
-                            cout << temp1[i] << " " << temp2[i] << " " << temp3[i] << " " << temp4[i] << endl;
-                            cout << sources.c_gr_mag << " " << solution[k][i] << " -> " << solution[k+1][i] << endl;
-                        }*/
                 }
 
-/*                if (k == 8786){
-                    for (int i = 0; i < GeoAc_EqCnt; i++){
-                        cout << solution[k+1][i] << " ";
-                    }
-                    cout << endl;
-                }*/
-
-                //if (k == 8786){
-                    //cout << "Should break here, printing struct" << endl;
-                    //PRINTSTRUCT(sources);
-                //}
-
                 if(GeoAc_BreakCheck(solution,k+1, sources)){
-                        //cout << "Break Check " << k << endl;
                         check = true;
                         break;
                 }
                 if(GeoAc_GroundCheck(solution,k+1)){
-                        //cout << "Ground Check " << k << endl;
                         check = false;
                         break;
                 }
-
         }
         
         delete [] temp0;        delete [] temp1;        delete [] temp2;
@@ -103,13 +90,14 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
 }
 
 
+//Modified RK4 function to support OpenMP implementation
 double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max, 
 				double& travel_time, double& attenuation, 
 				double GeoAc_theta, double GeoAc_phi, 
 				double freq, bool CalcAmp, 
 				GeoAc_Sources_Struct &sources, 
 				SplineStruct &splines, 
-				ofstream* raypaths, ofstream* caustics){
+				ofstream* raypaths, ofstream* caustics, int rayCount, int* maxPoints){
 
     int k = 0;	// Integer to track ending index of solution
 
@@ -151,13 +139,12 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
     // Stores if we are completely done iterating for this ray (ignore other bounces)
     bool check = false;
 
+    int countWrites = 0; //Keep track of how many writes to rayPaths occur
     for (k = 0; k < step_limit - 1; k++) {
         // Calculate the next row of solution from the current row
         for (int i = 0; i < GeoAc_EqCnt; i++){
             temp0[i] = current[i];
-//            cout << temp0[i] << " ";
         }
-//        cout << endl << "1st Calculations" << endl;
         GeoAc_UpdateSources(s, temp0, sources, splines);
 
         ds = GeoAc_Set_ds(temp0);         
@@ -166,33 +153,25 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
         for (int i = 0; i < GeoAc_EqCnt; i++){
             temp1[i] = ds*GeoAc_EvalSrcEq(s, temp0, i, sources);
             partial1[i] = current[i] + temp1[i]/2.0;
-//            cout << "(" << temp0[i] << "," << temp1[i] << "," << partial1[i] << ") ";
         }
-//        cout << endl << "2nd Calculation" << endl;
         GeoAc_UpdateSources(s + ds/2, partial1, sources, splines);
 
         for (int i = 0; i < GeoAc_EqCnt; i++){
             temp2[i] = ds*GeoAc_EvalSrcEq(s + ds/2.0, partial1, i, sources);
             partial2[i] = current[i] + temp2[i]/2.0;
-//            cout << "(" << temp1[i] << "," << temp2[i] << "," << partial2[i] << ") ";
         }
-//        cout << endl << "3rd Calculations" << endl;
         GeoAc_UpdateSources(s + ds/2, partial2, sources, splines);        
 
         for (int i = 0; i < GeoAc_EqCnt; i++){
             temp3[i] = ds*GeoAc_EvalSrcEq(s + ds/2.0, partial2, i, sources);
             partial3[i] = current[i] + temp3[i];
-//            cout << "(" << temp2[i] << "," << temp3[i] << "," << partial3[i] << ") ";
         }
-//        cout << endl << "Final Calculations" << endl;
         GeoAc_UpdateSources(s + ds, partial3, sources, splines);
 
         for (int i = 0; i < GeoAc_EqCnt; i++){
             temp4[i] = ds*GeoAc_EvalSrcEq(s+ds, partial3, i, sources);
             next[i] = current[i] + temp1[i]/6.0 + temp2[i]/3.0 + temp3[i]/3.0 + temp4[i]/6.0;
-//            cout << "(" << temp4[i] << "," << next[i] << ") ";
         }
-//        cout << endl;
 
         // If this triggers, we are completely done iterating through this ray    
         if(GeoAc_BreakCheck(&next,0, sources)){
@@ -205,11 +184,6 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
             check = false;
             break;
         }
-
-        // Calculate increase in travel time and attenuation
-
-        /*GeoAc_TravelTimeSegment(travel_time, solution, k, k+1, splines);
-        GeoAc_SB_AttenSegment(attenuation, solution, k, k+1, freq, splines);*/
 
         // Calculate ds = sqrt(dr^2 + r^2 dt^2 + r^2 + cos(t)^2 + dp^2)
         dr = next[0] - current[0];
@@ -250,6 +224,7 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
              
             // Write to raypaths if 25|k+1
             if(WriteRays && (k+1) % 25 == 0){
+                countWrites++;
                 *raypaths << next[0] - r_earth;
                 *raypaths << '\t' << setprecision(8) << next[1] * TO_DEG;
                 *raypaths << '\t' << setprecision(8) << next[2] * TO_DEG;
@@ -279,7 +254,9 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
             solution[i] = current[i];
             current[i] = next[i];
         }
-    
+        if(countWrites > *maxPoints){
+            *maxPoints = countWrites;
+        }
     } // End for loop
         
     // Delete local variables
