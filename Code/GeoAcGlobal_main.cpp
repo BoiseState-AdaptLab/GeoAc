@@ -440,15 +440,15 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
     // These double arrays contain information about 
     // each point along a ray
-    double wasp_altitudeArr[maxPoints];
-    double wasp_colatitudeArr[maxPoints];
-    double wasp_longitudeArr[maxPoints];
-    double wasp_krArr[maxPoints];
-    double wasp_ktArr[maxPoints];
-    double wasp_kfArr[maxPoints];
-    double wasp_amplitudeArr[maxPoints];
-    double wasp_VeffArr[maxPoints];
-    double wasp_arrival_timeArr[maxPoints];
+    double wasp_altitudeArr[min(maxPoints, 600)];
+    double wasp_colatitudeArr[min(maxPoints, 600)];
+    double wasp_longitudeArr[min(maxPoints, 600)];
+    double wasp_krArr[min(maxPoints, 600)];
+    double wasp_ktArr[min(maxPoints, 600)];
+    double wasp_kfArr[min(maxPoints, 600)];
+    double wasp_amplitudeArr[min(maxPoints, 600)];
+    double wasp_VeffArr[min(maxPoints, 600)];
+    double wasp_arrival_timeArr[min(maxPoints, 600)];
     
     string line;            // Keep track of each line in the stringstream
     int rayNumber = 0;      // Keep track of the ray for results
@@ -528,10 +528,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         
             while(!temp.eof()){
                 getline(temp, line);
-                if(line.empty()){
-                    // cout << "line: " << line << ", rayNumber: " << rayNumber << ", index: " << i << endl;
-                }
-                else{
+                if(!line.empty()){
                     // cout << "ray number: " << rayNumber << endl;
                     // cout << "line: " << line << endl;
                     stringstream rst(line);
@@ -601,14 +598,16 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             }
 
             // Clear the eof bit and rewind
-            temp.clear();
-            temp.seekg(0);
+            //temp.clear();
+            //temp.seekg(0);
             // Append to the final results file
-            final_results << temp.rdbuf();
+            //final_results << temp.rdbuf();
             // Close the file
             temp.close();
             // Delete the file
             remove(output_buffer);
+            
+            cout << "pointCount after results: " << pointCount << " rayNumber: " << rayNumber <<endl;
 
             // Repeat for raypaths
             if (WriteRays){
@@ -636,7 +635,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         pointStartIdx.push_back(pointRayNumber);
                         pointStartIdx.push_back(0);
                         pointCountIdx.push_back(1);
-                        pointCountIdx.push_back(600); // We need only 600 points at this time
+                        pointCountIdx.push_back(min(600, maxPoints)); // We need only 600 points at this time
 
                         cout << "pointRayNumber: " << pointRayNumber << endl;
 
@@ -659,6 +658,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         pointCountIdx.clear();
                         //Default fill value by netCDF = 9.9692099683868690e+36
                         //Reset the arrays with netCDF's default fill value
+                        /*
                         fill_n(wasp_altitudeArr, maxPoints,9.9692099683868690e+36);
                         fill_n(wasp_colatitudeArr, maxPoints,9.9692099683868690e+36);
                         fill_n(wasp_longitudeArr, maxPoints,9.9692099683868690e+36);
@@ -668,6 +668,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         fill_n(wasp_amplitudeArr, maxPoints,9.9692099683868690e+36);
                         fill_n(wasp_VeffArr, maxPoints,9.9692099683868690e+36);
                         fill_n(wasp_arrival_timeArr, maxPoints,9.9692099683868690e+36);
+                        */
                         
                         pointCount = 0; 
                         pointRayNumber++;
