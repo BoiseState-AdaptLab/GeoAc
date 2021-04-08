@@ -21,14 +21,14 @@ using namespace std;
 //See the RK4_2 function further down. 
 int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct &sources, SplineStruct &splines){
         
-	int k = 0;	// Integer to track ending index of solution
+  int k = 0;  // Integer to track ending index of solution
 
-	// Limiting number of steps, 
-	// defined by limiting ray length divided by step size (length/step)
+  // Limiting number of steps, 
+  // defined by limiting ray length divided by step size (length/step)
         int step_limit = GeoAc_ray_limit * int(1.0/(GeoAc_ds_min*10));        
         
-	// Current ray length and (variable) ray length step
-	double s = 0, ds = GeoAc_ds_min;                                
+  // Current ray length and (variable) ray length step
+  double s = 0, ds = GeoAc_ds_min;                                
 
         double *temp0 = new double [GeoAc_EqCnt];                double *temp1 = new double [GeoAc_EqCnt];
         double *temp2 = new double [GeoAc_EqCnt];                double *temp3 = new double [GeoAc_EqCnt];
@@ -92,14 +92,14 @@ int GeoAc_Propagate_RK4(double ** & solution, bool & check, GeoAc_Sources_Struct
 
 //Modified RK4 function to support OpenMP implementation
 double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max, 
-				double& travel_time, double& attenuation, 
-				double GeoAc_theta, double GeoAc_phi, 
-				double freq, bool CalcAmp, 
-				GeoAc_Sources_Struct &sources, 
-				SplineStruct &splines, 
-				ofstream* raypaths, ofstream* caustics, int rayCount, int* maxPoints){
+        double& travel_time, double& attenuation, 
+        double GeoAc_theta, double GeoAc_phi, 
+        double freq, bool CalcAmp, 
+        GeoAc_Sources_Struct &sources, 
+        SplineStruct &splines, 
+        ofstream* raypaths, ofstream* caustics, int rayCount, int* maxPoints){
 
-    int k = 0;	// Integer to track ending index of solution
+    int k = 0;  // Integer to track ending index of solution
 
     // Limiting number of steps, 
     // defined by limiting ray length divided by step size (length/step)
@@ -228,6 +228,9 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
                 *raypaths << next[0] - r_earth;
                 *raypaths << '\t' << setprecision(8) << next[1] * TO_DEG;
                 *raypaths << '\t' << setprecision(8) << next[2] * TO_DEG;
+                *raypaths << '\t' << setprecision(8) << next[3] * TO_DEG; //wasp_kr
+                *raypaths << '\t' << setprecision(8) << next[4] * TO_DEG; //wasp_kt
+                *raypaths << '\t' << setprecision(8) << next[5] * TO_DEG; //wasp_kf
                 if(CalcAmp){    *raypaths << '\t' << 20.0*log10(GeoAc_Amplitude(&next,0,GeoAc_theta,
                                                                             GeoAc_phi,sources, splines));}
                 else{           *raypaths << '\t' << 0.0;}
@@ -283,3 +286,4 @@ double* GeoAc_Propagate_RK4_2(double* & solution, double& r_max,
 
 
 #endif /* GEOAC_SOLVER_CPP_ */
+
