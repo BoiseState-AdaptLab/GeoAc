@@ -194,7 +194,9 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
       }
     }
     z_src=max(z_src,z_grnd);
+    
     if(WriteCaustics) CalcAmp=true;
+    
     // This also sets GeoAc_EqCnt
     GeoAc_ConfigureCalcAmp(CalcAmp);
     
@@ -251,12 +253,6 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     lat_src *= TO_RAD;
     lon_src *= TO_RAD;
     
-    /*
-    double*** solutions;
-    solutions = (double***)malloc(sizeof(double**) * num_threads);
-    */
-
-    //cout << "Got to for loop" << endl;
   
     // Create an array of structs, one for each thread
     // Each thread needs its own struct to modify and read from
@@ -285,7 +281,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         int tid = omp_get_thread_num();
         double* solution = new double[GeoAc_EqCnt];
 
-        //Get this thread's struct from the array
+        // Get this thread's struct from the array
         SplineStruct spl = spline_structs[tid];
 
 
@@ -366,19 +362,17 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
               rayCount++;
           }
           results[tid] << '\n';
-          //GeoAc_ClearSolutionArray(solution, k);
         }
+
         // Close files for this specific thread
         raypaths[tid].close();
         results[tid].close();
-
 
         // Close the caustics files for each bounce
         for (int i = 0; i < bounces; i++){
           caustics[tid][i].close();
         }
 
-        //GeoAc_DeleteSolutionArray(solution, length);
     }// End omp parallelization
 
     cout << "Parallel section complete. rayCount = " << rayCount << ", max points = " << maxPoints <<endl;
@@ -406,7 +400,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
     if (WriteRays){
         sprintf(output_buffer, "%s_raypaths_%ithreads.dat", file_title, num_threads);
         final_raypaths.open(output_buffer);
-        final_raypaths << "wasp_altitude [km]"; //z
+        final_raypaths << "# wasp_altitude [km]"; //z
         final_raypaths << '\t' << "wasp_colatitude [deg]"; //lat
         final_raypaths << '\t' << "wasp_longitude [deg]"; //lon
         final_raypaths << '\t' << "wasp_kr [deg]";
@@ -430,36 +424,36 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         }
     }
     
-    //These floats contain a ray's metadata
-    float thetaNcVarVec;
-    float wasp_takeoff_angleNcVarVec;  //wasp_takeoff_angle
-    float n_bNcVarVec;
-    float lat_0NcVarVec;
-    float lon_0NcVarVec;
-    float travelTimeNcVarVec;
-    float celerityNcVarVec;
-    float turningHeightNcVarVec;
-    float inclinationNcVarVec;
-    float backAzimuthNcVarVec;
-    float geoAttenNcVarVec;
-    float atmoAttenNcVarVec;
+    // These doubles contain a ray's metadata
+    double thetaVar;
+    double wasp_takeoff_angleVar;  // phi
+    int n_bVar;
+    double lat_0Var;
+    double lon_0Var;
+    double travelTimeVar;
+    double celerityVar;
+    double turningHeightVar;
+    double inclinationVar;
+    double backAzimuthVar;
+    double geoAttenVar;
+    double atmoAttenVar;
 
-    //These arrays contain information about each point
-    //along a ray
-    float wasp_altitudeVec[maxPoints];
-    float wasp_colatitudeVarVec[maxPoints];
-    float wasp_longitudeVarVec[maxPoints];
-    float wasp_krVarVec[maxPoints];
-    float wasp_ktVarVec[maxPoints];
-    float wasp_kfVarVec[maxPoints];
-    float wasp_amplitudeVarVec[maxPoints];
-    float wasp_VeffVarVec[maxPoints];
-    float wasp_arrival_timeVarVec[maxPoints];
+    // These double arrays contain information about 
+    // each point along a ray
+    double wasp_altitudeArr[maxPoints];
+    double wasp_colatitudeArr[maxPoints];
+    double wasp_longitudeArr[maxPoints];
+    double wasp_krArr[maxPoints];
+    double wasp_ktArr[maxPoints];
+    double wasp_kfArr[maxPoints];
+    double wasp_amplitudeArr[maxPoints];
+    double wasp_VeffArr[maxPoints];
+    double wasp_arrival_timeArr[maxPoints];
     
-    string line;    //Keep track of each line in the stringstream
-    int rayNumber = 0;  //Keep track of the ray for results
-    int pointRayNumber = 0; //Keep track of the ray for raypaths
-    int pointCount = 0; //Keep track of each point
+    string line;            // Keep track of each line in the stringstream
+    int rayNumber = 0;      // Keep track of the ray for results
+    int pointRayNumber = 0; // Keep track of the ray for raypaths
+    int pointCount = 0;     // Keep track of each point
 
     //Begin netCDF writing
     static const int NRAYS = (phi_bounds+1) * (theta_bounds+1);
@@ -481,33 +475,33 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         vector<NcDim> dims1;
         dims1.push_back(nRaysDim);
 
-        NcVar thetaNcVar = dataFile.addVar("theta", ncFloat, dims1);
-        NcVar wasp_takeoff_angleNcVar = dataFile.addVar("wasp_takeoff_angle", ncFloat, dims1); //phi
+        NcVar thetaNcVar = dataFile.addVar("theta", ncDouble, dims1);
+        NcVar wasp_takeoff_angleNcVar = dataFile.addVar("wasp_takeoff_angle", ncDouble, dims1); //phi
         NcVar n_bNcVar = dataFile.addVar("n_b", ncInt, dims1);
-        NcVar lat_0NcVar = dataFile.addVar("lat_0_deg", ncFloat, dims1);
-        NcVar lon_0NcVar = dataFile.addVar("lon_0_deg", ncFloat, dims1);
-        NcVar travelTimeNcVar = dataFile.addVar("TravelTime_s", ncFloat, dims1);
-        NcVar celerityNcVar = dataFile.addVar("Celerity_kmps", ncFloat, dims1);
-        NcVar turningHeightNcVar = dataFile.addVar("TurningHeight_km", ncFloat, dims1);
-        NcVar inclinationNcVar = dataFile.addVar("Inclination_deg", ncFloat, dims1);
-        NcVar backAzimuthNcVar = dataFile.addVar("BackAzimuth_deg", ncFloat, dims1);
-        NcVar geoAttenNcVar = dataFile.addVar("GeoAtten_dB", ncFloat, dims1);
-        NcVar atmoAttenNcVar = dataFile.addVar("AtmoAtten_dB", ncFloat, dims1);
+        NcVar lat_0NcVar = dataFile.addVar("lat_0_deg", ncDouble, dims1);
+        NcVar lon_0NcVar = dataFile.addVar("lon_0_deg", ncDouble, dims1);
+        NcVar travelTimeNcVar = dataFile.addVar("TravelTime_s", ncDouble, dims1);
+        NcVar celerityNcVar = dataFile.addVar("Celerity_kmps", ncDouble, dims1);
+        NcVar turningHeightNcVar = dataFile.addVar("TurningHeight_km", ncDouble, dims1);
+        NcVar inclinationNcVar = dataFile.addVar("Inclination_deg", ncDouble, dims1);
+        NcVar backAzimuthNcVar = dataFile.addVar("BackAzimuth_deg", ncDouble, dims1);
+        NcVar geoAttenNcVar = dataFile.addVar("GeoAtten_dB", ncDouble, dims1);
+        NcVar atmoAttenNcVar = dataFile.addVar("AtmoAtten_dB", ncDouble, dims1);
 
         //Variables for every point along a ray
         vector<NcDim> dims2;
         dims2.push_back(nRaysDim);
         dims2.push_back(maxPointsDim);
         
-        NcVar wasp_altitude = dataFile.addVar("wasp_altitude_km", ncFloat, dims2);   //z
-        NcVar wasp_colatitudeVar = dataFile.addVar("wasp_colatitude_deg", ncFloat, dims2);
-        NcVar wasp_longitudeVar = dataFile.addVar("wasp_longitude_deg", ncFloat, dims2);
-        NcVar wasp_krVar = dataFile.addVar("wasp_kr_deg", ncFloat, dims2);
-        NcVar wasp_ktVar = dataFile.addVar("wasp_kt_deg", ncFloat, dims2);
-        NcVar wasp_kfVar = dataFile.addVar("wasp_kf_deg", ncFloat, dims2);
-        NcVar wasp_amplitudeVar = dataFile.addVar("wasp_amplitude_dB", ncFloat, dims2);
-        NcVar wasp_VeffVar = dataFile.addVar("wasp_Veff_dB", ncFloat, dims2);
-        NcVar wasp_arrival_timeVar = dataFile.addVar("wasp_arrival_time_s", ncFloat, dims2); 
+        NcVar wasp_altitudeVar = dataFile.addVar("wasp_altitude_km", ncDouble, dims2);   //z
+        NcVar wasp_colatitudeVar = dataFile.addVar("wasp_colatitude_deg", ncDouble, dims2);
+        NcVar wasp_longitudeVar = dataFile.addVar("wasp_longitude_deg", ncDouble, dims2);
+        NcVar wasp_krVar = dataFile.addVar("wasp_kr_deg", ncDouble, dims2);
+        NcVar wasp_ktVar = dataFile.addVar("wasp_kt_deg", ncDouble, dims2);
+        NcVar wasp_kfVar = dataFile.addVar("wasp_kf_deg", ncDouble, dims2);
+        NcVar wasp_amplitudeVar = dataFile.addVar("wasp_amplitude_dB", ncDouble, dims2);
+        NcVar wasp_VeffVar = dataFile.addVar("wasp_Veff_dB", ncDouble, dims2);
+        NcVar wasp_arrival_timeVar = dataFile.addVar("wasp_arrival_time_s", ncDouble, dims2); 
 
         vector<size_t> rayStartIdx;
         vector<size_t> rayCountIdx;
@@ -522,7 +516,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             
             cout << "top pointCount: " << pointCount << endl;
             for (int i=0; i<pointCount; i++){
-                cout << "top wasp_altitudeVec: " << wasp_altitudeVec[i] << endl;
+                cout << "top wasp_altitudeArr: " << wasp_altitudeArr[i] << endl;
             }
             
             // Open the file in read mode
@@ -543,62 +537,62 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                     stringstream rst(line);
                     rst.precision(8);
 
-                    float temp_f;
+                    double temp_f;
                     int temp_b;
 
                     rst >> temp_f;
-                    thetaNcVarVec=temp_f;
+                    thetaVar=temp_f;
                     
                     rst >> temp_f;
-                    wasp_takeoff_angleNcVarVec=temp_f;
+                    wasp_takeoff_angleVar=temp_f;
                     
                     rst >> temp_b;
-                    n_bNcVarVec=temp_b;
+                    n_bVar=temp_b;
                     
                     rst >> temp_f;
-                    lat_0NcVarVec=temp_f;
+                    lat_0Var=temp_f;
                     
                     rst >> temp_f;
-                    lon_0NcVarVec=temp_f;
+                    lon_0Var=temp_f;
                     
                     rst >> temp_f;
-                    travelTimeNcVarVec=temp_f;
+                    travelTimeVar=temp_f;
                     
                     rst >> temp_f;
-                    celerityNcVarVec=temp_f;
+                    celerityVar=temp_f;
                     
                     rst >> temp_f;
-                    turningHeightNcVarVec=temp_f;
+                    turningHeightVar=temp_f;
                     
                     rst >> temp_f;
-                    inclinationNcVarVec=temp_f;
+                    inclinationVar=temp_f;
                     
                     rst >> temp_f;
-                    backAzimuthNcVarVec=temp_f;
+                    backAzimuthVar=temp_f;
                     
                     rst >> temp_f;
-                    geoAttenNcVarVec=temp_f;
+                    geoAttenVar=temp_f;
                     
                     rst >> temp_f;
-                    atmoAttenNcVarVec=temp_f;
+                    atmoAttenVar=temp_f;
                     
                     //Stream to netCDF
                     rayStartIdx.push_back(rayNumber);
                     rayCountIdx.push_back(1);
                     cout << "rayNumber: " << rayNumber << endl;
             
-                    thetaNcVar.putVar(rayStartIdx, rayCountIdx, &thetaNcVarVec);    
-                    wasp_takeoff_angleNcVar.putVar(rayStartIdx, rayCountIdx, &wasp_takeoff_angleNcVarVec);
-                    n_bNcVar.putVar(rayStartIdx, rayCountIdx, &n_bNcVarVec);
-                    lat_0NcVar.putVar(rayStartIdx, rayCountIdx, &lat_0NcVarVec);
-                    lon_0NcVar.putVar(rayStartIdx, rayCountIdx, &lon_0NcVarVec);
-                    travelTimeNcVar.putVar(rayStartIdx, rayCountIdx, &travelTimeNcVarVec);
-                    celerityNcVar.putVar(rayStartIdx, rayCountIdx, &celerityNcVarVec);
-                    turningHeightNcVar.putVar(rayStartIdx, rayCountIdx, &turningHeightNcVarVec);
-                    inclinationNcVar.putVar(rayStartIdx, rayCountIdx, &inclinationNcVarVec);
-                    backAzimuthNcVar.putVar(rayStartIdx, rayCountIdx, &backAzimuthNcVarVec);
-                    geoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &geoAttenNcVarVec);
-                    atmoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &atmoAttenNcVarVec);
+                    thetaNcVar.putVar(rayStartIdx, rayCountIdx, &thetaVar);    
+                    wasp_takeoff_angleNcVar.putVar(rayStartIdx, rayCountIdx, &wasp_takeoff_angleVar);
+                    n_bNcVar.putVar(rayStartIdx, rayCountIdx, &n_bVar);
+                    lat_0NcVar.putVar(rayStartIdx, rayCountIdx, &lat_0Var);
+                    lon_0NcVar.putVar(rayStartIdx, rayCountIdx, &lon_0Var);
+                    travelTimeNcVar.putVar(rayStartIdx, rayCountIdx, &travelTimeVar);
+                    celerityNcVar.putVar(rayStartIdx, rayCountIdx, &celerityVar);
+                    turningHeightNcVar.putVar(rayStartIdx, rayCountIdx, &turningHeightVar);
+                    inclinationNcVar.putVar(rayStartIdx, rayCountIdx, &inclinationVar);
+                    backAzimuthNcVar.putVar(rayStartIdx, rayCountIdx, &backAzimuthVar);
+                    geoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &geoAttenVar);
+                    atmoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &atmoAttenVar);
 
                     rayNumber++;
                     rayStartIdx.clear();
@@ -647,15 +641,15 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         cout << "pointRayNumber: " << pointRayNumber << endl;
 
                         // Write the data to the file
-                        wasp_altitude.putVar(pointStartIdx, pointCountIdx, wasp_altitudeVec);
-                        wasp_colatitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_colatitudeVarVec);
-                        wasp_longitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_longitudeVarVec);
-                        wasp_krVar.putVar(pointStartIdx, pointCountIdx, wasp_krVarVec);
-                        wasp_ktVar.putVar(pointStartIdx, pointCountIdx, wasp_ktVarVec);
-                        wasp_kfVar.putVar(pointStartIdx, pointCountIdx, wasp_kfVarVec);
-                        wasp_amplitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_amplitudeVarVec);
-                        wasp_VeffVar.putVar(pointStartIdx, pointCountIdx, wasp_VeffVarVec);
-                        wasp_arrival_timeVar.putVar(pointStartIdx, pointCountIdx, wasp_arrival_timeVarVec);
+                        wasp_altitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_altitudeArr);
+                        wasp_colatitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_colatitudeArr);
+                        wasp_longitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_longitudeArr);
+                        wasp_krVar.putVar(pointStartIdx, pointCountIdx, wasp_krArr);
+                        wasp_ktVar.putVar(pointStartIdx, pointCountIdx, wasp_ktArr);
+                        wasp_kfVar.putVar(pointStartIdx, pointCountIdx, wasp_kfArr);
+                        wasp_amplitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_amplitudeArr);
+                        wasp_VeffVar.putVar(pointStartIdx, pointCountIdx, wasp_VeffArr);
+                        wasp_arrival_timeVar.putVar(pointStartIdx, pointCountIdx, wasp_arrival_timeArr);
 
                         // The file will be automatically close when the NcFile object goes
                         // out of scope. This frees up any internal netCDF resources
@@ -672,34 +666,34 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         stringstream rpst(line);
                         //cout << "line: " << line << endl;
                         rpst.precision(8);
-                        float f;
+                        double f;
                         
                         rpst >> f;
-                        wasp_altitudeVec[pointCount] = f;
+                        wasp_altitudeArr[pointCount] = f;
                         
                         rpst >> f;
-                        wasp_colatitudeVarVec[pointCount] = f;
+                        wasp_colatitudeArr[pointCount] = f;
                         
                         rpst >> f;
-                        wasp_longitudeVarVec[pointCount] = f;
+                        wasp_longitudeArr[pointCount] = f;
 
                         rpst >> f;
-                        wasp_krVarVec[pointCount] = f;
+                        wasp_krArr[pointCount] = f;
 
                         rpst >> f;
-                        wasp_ktVarVec[pointCount] = f;
+                        wasp_ktArr[pointCount] = f;
 
                         rpst >> f;
-                        wasp_kfVarVec[pointCount] = f;
+                        wasp_kfArr[pointCount] = f;
                         
                         rpst >> f;
-                        wasp_amplitudeVarVec[pointCount] = f;
+                        wasp_amplitudeArr[pointCount] = f;
                         
                         rpst >> f;
-                        wasp_VeffVarVec[pointCount] = f;
+                        wasp_VeffArr[pointCount] = f;
                         
                         rpst >> f;
-                        wasp_arrival_timeVarVec[pointCount] = f;
+                        wasp_arrival_timeArr[pointCount] = f;
                         
                         moreData = true;
                         pointCount++;
@@ -733,13 +727,10 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         cout << "NC_ERR: " << NC_ERR <<endl;
     }        
     
-
     // Close all files
     final_results.close();
     final_raypaths.close();
   
- 
-
     for (int j = 0; j < bounces; j++){
         final_caustics[j].close();
     }
