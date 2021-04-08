@@ -468,7 +468,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
         // Create netCDF dimensions
         NcDim nRaysDim = dataFile.addDim("nRays", NRAYS); //Number of unique rays
-        NcDim maxPointsDim = dataFile.addDim("maxPointsAlongRay", maxPoints);  //Max points along the ray. We get this using OpenMP reduction
+        NcDim maxPointsDim = dataFile.addDim("maxPointsAlongRay", 600);  // We are interested in 600 points only!
         // cout << "length  = " << length;
 
         // Variables for each ray(unique phi and theta)
@@ -636,7 +636,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         pointStartIdx.push_back(pointRayNumber);
                         pointStartIdx.push_back(0);
                         pointCountIdx.push_back(1);
-                        pointCountIdx.push_back(pointCount);
+                        pointCountIdx.push_back(600); // We need only 600 points at this time
 
                         cout << "pointRayNumber: " << pointRayNumber << endl;
 
@@ -657,6 +657,17 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                         
                         pointStartIdx.clear();
                         pointCountIdx.clear();
+                        //Default fill value by netCDF = 9.9692099683868690e+36
+                        //Reset the arrays with netCDF's default fill value
+                        fill_n(wasp_altitudeArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_colatitudeArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_longitudeArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_krArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_ktArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_kfArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_amplitudeArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_VeffArr, maxPoints,9.9692099683868690e+36);
+                        fill_n(wasp_arrival_timeArr, maxPoints,9.9692099683868690e+36);
                         
                         pointCount = 0; 
                         pointRayNumber++;
@@ -769,8 +780,6 @@ int main(int argc, char* argv[]){
     
     return 0;
 }
-
-
 
 
 
