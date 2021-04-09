@@ -115,6 +115,383 @@ void GeoAcGlobal_Usage(){
     
 }
 
+
+
+// Combine all dat files and write to netCDF
+void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds, 
+                        int* bounces, char* file_title, int* num_threads, 
+                        bool WriteRays, bool WriteCaustics){
+
+
+    // Create master files to combine each thread's files into
+    ofstream final_results, final_raypaths;
+    char output_buffer[60]; // File name
+
+    // Write header information for each file type
+    sprintf(output_buffer, "%s_results_%ithreads.dat", file_title, *num_threads);
+    final_results.open(output_buffer);
+    final_results << "# theta [deg]";
+    final_results << '\t' << "wasp_takeoff_angle [deg]"; //phi
+    final_results << '\t' << "n_b";
+    final_results << '\t' << "lat_0 [deg]";
+    final_results << '\t' << "lon_0 [deg]";
+    final_results << '\t' << "Travel Time [s]";
+    final_results << '\t' << "Celerity [km/s]";
+    final_results << '\t' << "Turning Height [km]";
+    final_results << '\t' << "Inclination [deg]";
+    final_results << '\t' << "Back Azimuth [deg]";
+    final_results << '\t' << "Geo. Atten. [dB]";
+    final_results << '\t' << "Atmo. Atten. [dB]";
+    final_results << '\n';
+
+
+    if (WriteRays){
+        sprintf(output_buffer, "%s_raypaths_%ithreads.dat", file_title, *num_threads);
+        final_raypaths.open(output_buffer);
+        final_raypaths << "# wasp_altitude [km]"; //z
+        final_raypaths << '\t' << "wasp_colatitude [deg]"; //lat
+        final_raypaths << '\t' << "wasp_longitude [deg]"; //lon
+        final_raypaths << '\t' << "wasp_kr [deg]";
+        final_raypaths << '\t' << "wasp_kt [deg]";
+        final_raypaths << '\t' << "wasp_kf [deg]";
+        final_raypaths << '\t' << "wasp_amplitude [dB]"; //Geo. Atten.
+        final_raypaths << '\t' << "wasp_Veff [dB]"; //Atmo. Atten
+        final_raypaths << '\t' << "wasp_arrival_time [s]"; //Travel time
+        final_raypaths << '\n';
+    }
+
+
+    // if (WriteCaustics){
+    //     for (int j = 0; j < *bounces; j++){
+    //         sprintf(output_buffer, "%s_caustics-path%i_%ithreads.dat", *file_title, j, *num_threads);
+    //         final_caustics[j].open(output_buffer);
+    //         final_caustics[j] << "# z [km]";
+    //         final_caustics[j] << '\t' << "Lat [deg]";
+    //         final_caustics[j] << '\t' << "Long [deg]";
+    //         final_caustics[j] << '\t' << "Travel Time [s]";
+    //         final_caustics[j] << '\n';
+    //     }
+    // }
+
+
+
+    // These doubles contain a ray's metadata
+    double thetaVar;
+    double wasp_takeoff_angleVar;  // phi
+    int n_bVar;
+    double lat_0Var;
+    double lon_0Var;
+    double travelTimeVar;
+    double celerityVar;
+    double turningHeightVar;
+    double inclinationVar;
+    double backAzimuthVar;
+    double geoAttenVar;
+    double atmoAttenVar;
+
+    // These double arrays contain information about 
+    // each point along a ray
+    double wasp_altitudeArr[*maxPoints];
+    double wasp_colatitudeArr[*maxPoints];
+    double wasp_longitudeArr[*maxPoints];
+    double wasp_krArr[*maxPoints];
+    double wasp_ktArr[*maxPoints];
+    double wasp_kfArr[*maxPoints];
+    double wasp_amplitudeArr[*maxPoints];
+    double wasp_VeffArr[*maxPoints];
+    double wasp_arrival_timeArr[*maxPoints];
+    
+    string line;            // Keep track of each line in the stringstream
+    int rayNumber = 0;      // Keep track of the ray for results
+    int pointRayNumber = 0; // Keep track of the ray for raypaths
+    int pointCount = 0;     // Keep track of each point
+
+    //Begin netCDF writing
+    static const int NRAYS = (*phi_bounds+1) * (*theta_bounds+1);
+    cout << "*phi_bounds = " << *phi_bounds << " + 1 * " << "*theta_bounds = " << *theta_bounds << " + 1" << endl;
+    cout << "NRAYS = " << NRAYS << endl;
+    static const int NC_ERR = 2;
+
+    try{
+        // Create the file. The Replace parameter tells netCDF to overwrite
+        // this file, if it already exists.
+        NcFile dataFile("GeoAcResultsAndRaypaths.nc", NcFile::replace);
+
+        // Create netCDF dimensions
+        NcDim nRaysDim = dataFile.addDim("nRays", NRAYS); //Number of unique rays
+        NcDim maxPointsDim = dataFile.addDim("maxPointsAlongRay", 600);  // We are interested in 600 points only!
+        // cout << "length  = " << length;
+
+        // Variables for each ray(unique phi and theta)
+        vector<NcDim> dims1;
+        dims1.push_back(nRaysDim);
+
+        NcVar thetaNcVar = dataFile.addVar("theta", ncDouble, dims1);
+        NcVar wasp_takeoff_angleNcVar = dataFile.addVar("wasp_takeoff_angle", ncDouble, dims1); //phi
+        NcVar n_bNcVar = dataFile.addVar("n_b", ncInt, dims1);
+        NcVar lat_0NcVar = dataFile.addVar("lat_0_deg", ncDouble, dims1);
+        NcVar lon_0NcVar = dataFile.addVar("lon_0_deg", ncDouble, dims1);
+        NcVar travelTimeNcVar = dataFile.addVar("TravelTime_s", ncDouble, dims1);
+        NcVar celerityNcVar = dataFile.addVar("Celerity_kmps", ncDouble, dims1);
+        NcVar turningHeightNcVar = dataFile.addVar("TurningHeight_km", ncDouble, dims1);
+        NcVar inclinationNcVar = dataFile.addVar("Inclination_deg", ncDouble, dims1);
+        NcVar backAzimuthNcVar = dataFile.addVar("BackAzimuth_deg", ncDouble, dims1);
+        NcVar geoAttenNcVar = dataFile.addVar("GeoAtten_dB", ncDouble, dims1);
+        NcVar atmoAttenNcVar = dataFile.addVar("AtmoAtten_dB", ncDouble, dims1);
+
+        //Variables for every point along a ray
+        vector<NcDim> dims2;
+        dims2.push_back(nRaysDim);
+        dims2.push_back(maxPointsDim);
+        
+        NcVar wasp_altitudeVar = dataFile.addVar("wasp_altitude_km", ncDouble, dims2);   //z
+        NcVar wasp_colatitudeVar = dataFile.addVar("wasp_colatitude_deg", ncDouble, dims2);
+        NcVar wasp_longitudeVar = dataFile.addVar("wasp_longitude_deg", ncDouble, dims2);
+        NcVar wasp_krVar = dataFile.addVar("wasp_kr_deg", ncDouble, dims2);
+        NcVar wasp_ktVar = dataFile.addVar("wasp_kt_deg", ncDouble, dims2);
+        NcVar wasp_kfVar = dataFile.addVar("wasp_kf_deg", ncDouble, dims2);
+        NcVar wasp_amplitudeVar = dataFile.addVar("wasp_amplitude_dB", ncDouble, dims2);
+        NcVar wasp_VeffVar = dataFile.addVar("wasp_Veff_dB", ncDouble, dims2);
+        NcVar wasp_arrival_timeVar = dataFile.addVar("wasp_arrival_time_s", ncDouble, dims2); 
+
+        vector<size_t> rayStartIdx;
+        vector<size_t> rayCountIdx;
+
+        vector<size_t> pointStartIdx;
+        vector<size_t> pointCountIdx;
+
+        // Combine all files
+        for (int i = 0; i < *num_threads; i++){
+            // Get the file name
+            sprintf(output_buffer, "%s_results_%i.dat", file_title, i);
+            
+            cout << "top pointCount: " << pointCount << endl;
+            for (int i=0; i<pointCount; i++){
+                cout << "top wasp_altitudeArr: " << wasp_altitudeArr[i] << endl;
+            }
+            
+            // Open the file in read mode
+            ifstream temp(output_buffer);
+            if(!temp.is_open()) {
+                perror("Error opening the file \n");
+                exit(EXIT_FAILURE);
+            }
+        
+            while(!temp.eof()){
+                getline(temp, line);
+                if(!line.empty()){
+                    // cout << "ray number: " << rayNumber << endl;
+                    // cout << "line: " << line << endl;
+                    stringstream rst(line);
+                    rst.precision(8);
+
+                    double temp_f;
+                    int temp_b;
+
+                    rst >> temp_f;
+                    thetaVar=temp_f;
+                    
+                    rst >> temp_f;
+                    wasp_takeoff_angleVar=temp_f;
+                    
+                    rst >> temp_b;
+                    n_bVar=temp_b;
+                    
+                    rst >> temp_f;
+                    lat_0Var=temp_f;
+                    
+                    rst >> temp_f;
+                    lon_0Var=temp_f;
+                    
+                    rst >> temp_f;
+                    travelTimeVar=temp_f;
+                    
+                    rst >> temp_f;
+                    celerityVar=temp_f;
+                    
+                    rst >> temp_f;
+                    turningHeightVar=temp_f;
+                    
+                    rst >> temp_f;
+                    inclinationVar=temp_f;
+                    
+                    rst >> temp_f;
+                    backAzimuthVar=temp_f;
+                    
+                    rst >> temp_f;
+                    geoAttenVar=temp_f;
+                    
+                    rst >> temp_f;
+                    atmoAttenVar=temp_f;
+                    
+                    //Stream to netCDF
+                    rayStartIdx.push_back(rayNumber);
+                    rayCountIdx.push_back(1);
+                    cout << "rayNumber: " << rayNumber << endl;
+            
+                    thetaNcVar.putVar(rayStartIdx, rayCountIdx, &thetaVar);    
+                    wasp_takeoff_angleNcVar.putVar(rayStartIdx, rayCountIdx, &wasp_takeoff_angleVar);
+                    n_bNcVar.putVar(rayStartIdx, rayCountIdx, &n_bVar);
+                    lat_0NcVar.putVar(rayStartIdx, rayCountIdx, &lat_0Var);
+                    lon_0NcVar.putVar(rayStartIdx, rayCountIdx, &lon_0Var);
+                    travelTimeNcVar.putVar(rayStartIdx, rayCountIdx, &travelTimeVar);
+                    celerityNcVar.putVar(rayStartIdx, rayCountIdx, &celerityVar);
+                    turningHeightNcVar.putVar(rayStartIdx, rayCountIdx, &turningHeightVar);
+                    inclinationNcVar.putVar(rayStartIdx, rayCountIdx, &inclinationVar);
+                    backAzimuthNcVar.putVar(rayStartIdx, rayCountIdx, &backAzimuthVar);
+                    geoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &geoAttenVar);
+                    atmoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &atmoAttenVar);
+
+                    rayNumber++;
+                    rayStartIdx.clear();
+                    rayCountIdx.clear();
+                }
+            }
+
+            // Clear the eof bit and rewind
+            temp.clear();
+            temp.seekg(0);
+            // Append to the final results file
+            final_results << temp.rdbuf();
+            // Close the file
+            temp.close();
+            // Delete the file
+            remove(output_buffer);
+            
+            cout << "pointCount after results: " << pointCount << " rayNumber: " << rayNumber <<endl;
+
+            // Repeat for raypaths
+            if (WriteRays){
+                sprintf(output_buffer, "%s_raypaths_%i.dat", file_title, i);
+                ifstream temp(output_buffer);
+                if(!temp.is_open()) {
+                    perror("Error opening the file \n");
+                    exit(EXIT_FAILURE);
+                }
+
+                line.clear();
+                bool moreData = false; //Is there data to be written?
+                        
+                pointStartIdx.clear();
+                pointCountIdx.clear();
+                pointCount = 0;
+                
+                getline(temp, line);
+                while(!temp.eof()){
+                    if(line.empty() && moreData){
+                        //The line subsequent to an empty line signals the start of the next ray
+                        cout << "empty line: " << line << endl;
+              
+                        //Stream to netCDF
+                        pointStartIdx.push_back(pointRayNumber);
+                        pointStartIdx.push_back(0);
+                        pointCountIdx.push_back(1);
+                        // We need only 600 points at this time.
+                        // If the ray has <600 points, use the min
+                        // number of points found
+                        pointCountIdx.push_back(min(600, pointCount)); 
+
+                        cout << "pointRayNumber: " << pointRayNumber << endl;
+
+                        // Write the data to the file
+                        wasp_altitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_altitudeArr);
+                        wasp_colatitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_colatitudeArr);
+                        wasp_longitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_longitudeArr);
+                        wasp_krVar.putVar(pointStartIdx, pointCountIdx, wasp_krArr);
+                        wasp_ktVar.putVar(pointStartIdx, pointCountIdx, wasp_ktArr);
+                        wasp_kfVar.putVar(pointStartIdx, pointCountIdx, wasp_kfArr);
+                        wasp_amplitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_amplitudeArr);
+                        wasp_VeffVar.putVar(pointStartIdx, pointCountIdx, wasp_VeffArr);
+                        wasp_arrival_timeVar.putVar(pointStartIdx, pointCountIdx, wasp_arrival_timeArr);
+
+                        // The file will be automatically close when the NcFile object goes
+                        // out of scope. This frees up any internal netCDF resources
+                        // associated with the file, and flushes any buffers.
+                        
+                        pointStartIdx.clear();
+                        pointCountIdx.clear();
+                        
+                        pointCount = 0; 
+                        pointRayNumber++;
+                        moreData = false;
+                    }
+                    else{
+                        stringstream rpst(line);
+                        //cout << "line: " << line << endl;
+                        rpst.precision(8);
+                        double f;
+                        
+                        rpst >> f;
+                        wasp_altitudeArr[pointCount] = f;
+                        
+                        rpst >> f;
+                        wasp_colatitudeArr[pointCount] = f;
+                        
+                        rpst >> f;
+                        wasp_longitudeArr[pointCount] = f;
+
+                        rpst >> f;
+                        wasp_krArr[pointCount] = f;
+
+                        rpst >> f;
+                        wasp_ktArr[pointCount] = f;
+
+                        rpst >> f;
+                        wasp_kfArr[pointCount] = f;
+                        
+                        rpst >> f;
+                        wasp_amplitudeArr[pointCount] = f;
+                        
+                        rpst >> f;
+                        wasp_VeffArr[pointCount] = f;
+                        
+                        rpst >> f;
+                        wasp_arrival_timeArr[pointCount] = f;
+                        
+                        moreData = true;
+                        pointCount++;
+                    }
+                    getline(temp, line);
+                }
+            
+                // Clear the eof bit and rewind
+                temp.clear();
+                temp.seekg(0);
+                // Append to the final raypaths file
+                final_raypaths << temp.rdbuf();
+                temp.close();
+                remove(output_buffer);
+            }
+
+            // // Repeat for each caustics bounce file
+            // if (WriteCaustics){
+            //     for (int j = 0; j < bounces; j++){
+            //         sprintf(output_buffer, "%s_caustics-path%i_%i.dat", file_title, j, i);
+            //         ifstream temp(output_buffer);
+            //         final_caustics[j] << temp.rdbuf();
+            //         temp.close();
+            //         remove(output_buffer);
+            //     }
+            // }
+        }
+    }
+    catch(NcException& e)
+      {e.what();
+        cout << "e.what(): " << e.what() <<endl;
+        cout << "NC_ERR: " << NC_ERR <<endl;
+    }
+
+    // Close all files
+    final_results.close();
+    final_raypaths.close();
+  
+    // for (int j = 0; j < *bounces; j++){
+    //     final_caustics[j].close();
+    // }    
+}
+
+
+
 void GeoAcGlobal_RunProp(char* inputs[], int count){
     double theta_min = 0.5, theta_max=45.0, theta_step=0.5;
     double phi_min=-90.0, phi_max=-90.0, phi_step=1.0;
@@ -237,6 +614,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             raypaths[i].open(output_buffer);
         }
 
+        /*
         // Check if we should write to caustics files
         if (WriteCaustics){
             // Each thread (i) has a file for each bounce (j)
@@ -245,6 +623,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
                 caustics[i][j].open(output_buffer);
             }
         } 
+        */
     }
 
     //cout << omp_get_max_threads() << endl;
@@ -367,387 +746,21 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         // Close files for this specific thread
         raypaths[tid].close();
         results[tid].close();
-
+/*
         // Close the caustics files for each bounce
         for (int i = 0; i < bounces; i++){
           caustics[tid][i].close();
         }
+*/
 
     }// End omp parallelization
 
     cout << "Parallel section complete. rayCount = " << rayCount << ", max points = " << maxPoints <<endl;
 
-    // Create master files to combine each thread's files into
-    ofstream final_results, final_raypaths, final_caustics[bounces];
-
-    // Write header information for each file type
-    sprintf(output_buffer, "%s_results_%ithreads.dat", file_title, num_threads);
-    final_results.open(output_buffer);
-    final_results << "# theta [deg]";
-    final_results << '\t' << "wasp_takeoff_angle [deg]"; //phi
-    final_results << '\t' << "n_b";
-    final_results << '\t' << "lat_0 [deg]";
-    final_results << '\t' << "lon_0 [deg]";
-    final_results << '\t' << "Travel Time [s]";
-    final_results << '\t' << "Celerity [km/s]";
-    final_results << '\t' << "Turning Height [km]";
-    final_results << '\t' << "Inclination [deg]";
-    final_results << '\t' << "Back Azimuth [deg]";
-    final_results << '\t' << "Geo. Atten. [dB]";
-    final_results << '\t' << "Atmo. Atten. [dB]";
-    final_results << '\n';
-
-    if (WriteRays){
-        sprintf(output_buffer, "%s_raypaths_%ithreads.dat", file_title, num_threads);
-        final_raypaths.open(output_buffer);
-        final_raypaths << "# wasp_altitude [km]"; //z
-        final_raypaths << '\t' << "wasp_colatitude [deg]"; //lat
-        final_raypaths << '\t' << "wasp_longitude [deg]"; //lon
-        final_raypaths << '\t' << "wasp_kr [deg]";
-        final_raypaths << '\t' << "wasp_kt [deg]";
-        final_raypaths << '\t' << "wasp_kf [deg]";
-        final_raypaths << '\t' << "wasp_amplitude [dB]"; //Geo. Atten.
-        final_raypaths << '\t' << "wasp_Veff [dB]"; //Atmo. Atten
-        final_raypaths << '\t' << "wasp_arrival_time [s]"; //Travel time
-        final_raypaths << '\n';
-    }
-
-    if (WriteCaustics){
-        for (int j = 0; j < bounces; j++){
-            sprintf(output_buffer, "%s_caustics-path%i_%ithreads.dat", file_title, j, num_threads);
-            final_caustics[j].open(output_buffer);
-            final_caustics[j] << "# z [km]";
-            final_caustics[j] << '\t' << "Lat [deg]";
-            final_caustics[j] << '\t' << "Long [deg]";
-            final_caustics[j] << '\t' << "Travel Time [s]";
-            final_caustics[j] << '\n';
-        }
-    }
-    
-    // These doubles contain a ray's metadata
-    double thetaVar;
-    double wasp_takeoff_angleVar;  // phi
-    int n_bVar;
-    double lat_0Var;
-    double lon_0Var;
-    double travelTimeVar;
-    double celerityVar;
-    double turningHeightVar;
-    double inclinationVar;
-    double backAzimuthVar;
-    double geoAttenVar;
-    double atmoAttenVar;
-
-    // These double arrays contain information about 
-    // each point along a ray
-    double wasp_altitudeArr[min(maxPoints, 600)];
-    double wasp_colatitudeArr[min(maxPoints, 600)];
-    double wasp_longitudeArr[min(maxPoints, 600)];
-    double wasp_krArr[min(maxPoints, 600)];
-    double wasp_ktArr[min(maxPoints, 600)];
-    double wasp_kfArr[min(maxPoints, 600)];
-    double wasp_amplitudeArr[min(maxPoints, 600)];
-    double wasp_VeffArr[min(maxPoints, 600)];
-    double wasp_arrival_timeArr[min(maxPoints, 600)];
-    
-    string line;            // Keep track of each line in the stringstream
-    int rayNumber = 0;      // Keep track of the ray for results
-    int pointRayNumber = 0; // Keep track of the ray for raypaths
-    int pointCount = 0;     // Keep track of each point
-
-    //Begin netCDF writing
-    static const int NRAYS = (phi_bounds+1) * (theta_bounds+1);
-    cout << "phi_bounds = " << phi_bounds << " + 1 * " << "theta_bounds = " << theta_bounds << " + 1" << endl;
-    cout << "NRAYS = " << NRAYS << endl;
-    static const int NC_ERR = 2;
-
-    try{
-        // Create the file. The Replace parameter tells netCDF to overwrite
-        // this file, if it already exists.
-        NcFile dataFile("GeoAcResultsAndRaypaths.nc", NcFile::replace);
-
-        // Create netCDF dimensions
-        NcDim nRaysDim = dataFile.addDim("nRays", NRAYS); //Number of unique rays
-        NcDim maxPointsDim = dataFile.addDim("maxPointsAlongRay", 600);  // We are interested in 600 points only!
-        // cout << "length  = " << length;
-
-        // Variables for each ray(unique phi and theta)
-        vector<NcDim> dims1;
-        dims1.push_back(nRaysDim);
-
-        NcVar thetaNcVar = dataFile.addVar("theta", ncDouble, dims1);
-        NcVar wasp_takeoff_angleNcVar = dataFile.addVar("wasp_takeoff_angle", ncDouble, dims1); //phi
-        NcVar n_bNcVar = dataFile.addVar("n_b", ncInt, dims1);
-        NcVar lat_0NcVar = dataFile.addVar("lat_0_deg", ncDouble, dims1);
-        NcVar lon_0NcVar = dataFile.addVar("lon_0_deg", ncDouble, dims1);
-        NcVar travelTimeNcVar = dataFile.addVar("TravelTime_s", ncDouble, dims1);
-        NcVar celerityNcVar = dataFile.addVar("Celerity_kmps", ncDouble, dims1);
-        NcVar turningHeightNcVar = dataFile.addVar("TurningHeight_km", ncDouble, dims1);
-        NcVar inclinationNcVar = dataFile.addVar("Inclination_deg", ncDouble, dims1);
-        NcVar backAzimuthNcVar = dataFile.addVar("BackAzimuth_deg", ncDouble, dims1);
-        NcVar geoAttenNcVar = dataFile.addVar("GeoAtten_dB", ncDouble, dims1);
-        NcVar atmoAttenNcVar = dataFile.addVar("AtmoAtten_dB", ncDouble, dims1);
-
-        //Variables for every point along a ray
-        vector<NcDim> dims2;
-        dims2.push_back(nRaysDim);
-        dims2.push_back(maxPointsDim);
-        
-        NcVar wasp_altitudeVar = dataFile.addVar("wasp_altitude_km", ncDouble, dims2);   //z
-        NcVar wasp_colatitudeVar = dataFile.addVar("wasp_colatitude_deg", ncDouble, dims2);
-        NcVar wasp_longitudeVar = dataFile.addVar("wasp_longitude_deg", ncDouble, dims2);
-        NcVar wasp_krVar = dataFile.addVar("wasp_kr_deg", ncDouble, dims2);
-        NcVar wasp_ktVar = dataFile.addVar("wasp_kt_deg", ncDouble, dims2);
-        NcVar wasp_kfVar = dataFile.addVar("wasp_kf_deg", ncDouble, dims2);
-        NcVar wasp_amplitudeVar = dataFile.addVar("wasp_amplitude_dB", ncDouble, dims2);
-        NcVar wasp_VeffVar = dataFile.addVar("wasp_Veff_dB", ncDouble, dims2);
-        NcVar wasp_arrival_timeVar = dataFile.addVar("wasp_arrival_time_s", ncDouble, dims2); 
-
-        vector<size_t> rayStartIdx;
-        vector<size_t> rayCountIdx;
-
-        vector<size_t> pointStartIdx;
-        vector<size_t> pointCountIdx;
-
-        // Combine all files
-        for (int i = 0; i < num_threads; i++){
-            // Get the file name
-            sprintf(output_buffer, "%s_results_%i.dat", file_title, i);
-            
-            cout << "top pointCount: " << pointCount << endl;
-            for (int i=0; i<pointCount; i++){
-                cout << "top wasp_altitudeArr: " << wasp_altitudeArr[i] << endl;
-            }
-            
-            // Open the file in read mode
-            ifstream temp(output_buffer);
-            if(!temp.is_open()) {
-                perror("Error opening the file \n");
-                exit(EXIT_FAILURE);
-            }
-        
-            while(!temp.eof()){
-                getline(temp, line);
-                if(!line.empty()){
-                    // cout << "ray number: " << rayNumber << endl;
-                    // cout << "line: " << line << endl;
-                    stringstream rst(line);
-                    rst.precision(8);
-
-                    double temp_f;
-                    int temp_b;
-
-                    rst >> temp_f;
-                    thetaVar=temp_f;
-                    
-                    rst >> temp_f;
-                    wasp_takeoff_angleVar=temp_f;
-                    
-                    rst >> temp_b;
-                    n_bVar=temp_b;
-                    
-                    rst >> temp_f;
-                    lat_0Var=temp_f;
-                    
-                    rst >> temp_f;
-                    lon_0Var=temp_f;
-                    
-                    rst >> temp_f;
-                    travelTimeVar=temp_f;
-                    
-                    rst >> temp_f;
-                    celerityVar=temp_f;
-                    
-                    rst >> temp_f;
-                    turningHeightVar=temp_f;
-                    
-                    rst >> temp_f;
-                    inclinationVar=temp_f;
-                    
-                    rst >> temp_f;
-                    backAzimuthVar=temp_f;
-                    
-                    rst >> temp_f;
-                    geoAttenVar=temp_f;
-                    
-                    rst >> temp_f;
-                    atmoAttenVar=temp_f;
-                    
-                    //Stream to netCDF
-                    rayStartIdx.push_back(rayNumber);
-                    rayCountIdx.push_back(1);
-                    cout << "rayNumber: " << rayNumber << endl;
-            
-                    thetaNcVar.putVar(rayStartIdx, rayCountIdx, &thetaVar);    
-                    wasp_takeoff_angleNcVar.putVar(rayStartIdx, rayCountIdx, &wasp_takeoff_angleVar);
-                    n_bNcVar.putVar(rayStartIdx, rayCountIdx, &n_bVar);
-                    lat_0NcVar.putVar(rayStartIdx, rayCountIdx, &lat_0Var);
-                    lon_0NcVar.putVar(rayStartIdx, rayCountIdx, &lon_0Var);
-                    travelTimeNcVar.putVar(rayStartIdx, rayCountIdx, &travelTimeVar);
-                    celerityNcVar.putVar(rayStartIdx, rayCountIdx, &celerityVar);
-                    turningHeightNcVar.putVar(rayStartIdx, rayCountIdx, &turningHeightVar);
-                    inclinationNcVar.putVar(rayStartIdx, rayCountIdx, &inclinationVar);
-                    backAzimuthNcVar.putVar(rayStartIdx, rayCountIdx, &backAzimuthVar);
-                    geoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &geoAttenVar);
-                    atmoAttenNcVar.putVar(rayStartIdx, rayCountIdx, &atmoAttenVar);
-
-                    rayNumber++;
-                    rayStartIdx.clear();
-                    rayCountIdx.clear();
-                }
-            }
-
-            // Clear the eof bit and rewind
-            //temp.clear();
-            //temp.seekg(0);
-            // Append to the final results file
-            //final_results << temp.rdbuf();
-            // Close the file
-            temp.close();
-            // Delete the file
-            remove(output_buffer);
-            
-            cout << "pointCount after results: " << pointCount << " rayNumber: " << rayNumber <<endl;
-
-            // Repeat for raypaths
-            if (WriteRays){
-                sprintf(output_buffer, "%s_raypaths_%i.dat", file_title, i);
-                ifstream temp(output_buffer);
-                if(!temp.is_open()) {
-                    perror("Error opening the file \n");
-                    exit(EXIT_FAILURE);
-                }
-
-                line.clear();
-                bool moreData = false; //Is there data to be written?
-                        
-                pointStartIdx.clear();
-                pointCountIdx.clear();
-                pointCount = 0;
-                
-                while(!temp.eof()){
-                    getline(temp, line);
-                    if(line.empty() && moreData){
-                        //The line subsequent to an empty line signals the start of the next ray
-                        cout << "empty line: " << line << endl;
-              
-                        //Stream to netCDF
-                        pointStartIdx.push_back(pointRayNumber);
-                        pointStartIdx.push_back(0);
-                        pointCountIdx.push_back(1);
-                        pointCountIdx.push_back(min(600, maxPoints)); // We need only 600 points at this time
-
-                        cout << "pointRayNumber: " << pointRayNumber << endl;
-
-                        // Write the data to the file
-                        wasp_altitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_altitudeArr);
-                        wasp_colatitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_colatitudeArr);
-                        wasp_longitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_longitudeArr);
-                        wasp_krVar.putVar(pointStartIdx, pointCountIdx, wasp_krArr);
-                        wasp_ktVar.putVar(pointStartIdx, pointCountIdx, wasp_ktArr);
-                        wasp_kfVar.putVar(pointStartIdx, pointCountIdx, wasp_kfArr);
-                        wasp_amplitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_amplitudeArr);
-                        wasp_VeffVar.putVar(pointStartIdx, pointCountIdx, wasp_VeffArr);
-                        wasp_arrival_timeVar.putVar(pointStartIdx, pointCountIdx, wasp_arrival_timeArr);
-
-                        // The file will be automatically close when the NcFile object goes
-                        // out of scope. This frees up any internal netCDF resources
-                        // associated with the file, and flushes any buffers.
-                        
-                        pointStartIdx.clear();
-                        pointCountIdx.clear();
-                        //Default fill value by netCDF = 9.9692099683868690e+36
-                        //Reset the arrays with netCDF's default fill value
-                        /*
-                        fill_n(wasp_altitudeArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_colatitudeArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_longitudeArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_krArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_ktArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_kfArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_amplitudeArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_VeffArr, maxPoints,9.9692099683868690e+36);
-                        fill_n(wasp_arrival_timeArr, maxPoints,9.9692099683868690e+36);
-                        */
-                        
-                        pointCount = 0; 
-                        pointRayNumber++;
-                        moreData = false;
-                    }
-                    else{
-                        stringstream rpst(line);
-                        //cout << "line: " << line << endl;
-                        rpst.precision(8);
-                        double f;
-                        
-                        rpst >> f;
-                        wasp_altitudeArr[pointCount] = f;
-                        
-                        rpst >> f;
-                        wasp_colatitudeArr[pointCount] = f;
-                        
-                        rpst >> f;
-                        wasp_longitudeArr[pointCount] = f;
-
-                        rpst >> f;
-                        wasp_krArr[pointCount] = f;
-
-                        rpst >> f;
-                        wasp_ktArr[pointCount] = f;
-
-                        rpst >> f;
-                        wasp_kfArr[pointCount] = f;
-                        
-                        rpst >> f;
-                        wasp_amplitudeArr[pointCount] = f;
-                        
-                        rpst >> f;
-                        wasp_VeffArr[pointCount] = f;
-                        
-                        rpst >> f;
-                        wasp_arrival_timeArr[pointCount] = f;
-                        
-                        moreData = true;
-                        pointCount++;
-                    }
-                }
-            
-                // Clear the eof bit and rewind
-                temp.clear();
-                temp.seekg(0);
-                // Append to the final raypaths file
-                final_raypaths << temp.rdbuf();
-                temp.close();
-                remove(output_buffer);
-            }
-
-            // Repeat for each caustics bounce file
-            if (WriteCaustics){
-                for (int j = 0; j < bounces; j++){
-                    sprintf(output_buffer, "%s_caustics-path%i_%i.dat", file_title, j, i);
-                    ifstream temp(output_buffer);
-                    final_caustics[j] << temp.rdbuf();
-                    temp.close();
-                    remove(output_buffer);
-                }
-            }
-        }
-    }
-    catch(NcException& e)
-      {e.what();
-        cout << "e.what(): " << e.what() <<endl;
-        cout << "NC_ERR: " << NC_ERR <<endl;
-    }        
-    
-    // Close all files
-    final_results.close();
-    final_raypaths.close();
-  
-    for (int j = 0; j < bounces; j++){
-        final_caustics[j].close();
-    }
+    GeoAcGlobal_NetCdf(&maxPoints, &phi_bounds, &theta_bounds, &bounces, file_title, &num_threads, WriteRays, WriteCaustics);
 
 }
+
 
 
 int main(int argc, char* argv[]){
@@ -781,6 +794,7 @@ int main(int argc, char* argv[]){
     
     return 0;
 }
+
 
 
 
