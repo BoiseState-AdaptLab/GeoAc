@@ -208,8 +208,6 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
 
     //Begin netCDF writing
     static const int NRAYS = (*phi_bounds+1) * (*theta_bounds+1);
-    cout << "*phi_bounds = " << *phi_bounds << " + 1 * " << "*theta_bounds = " << *theta_bounds << " + 1" << endl;
-    cout << "NRAYS = " << NRAYS << endl;
     static const int NC_ERR = 2;
 
     try{
@@ -265,10 +263,7 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
             // Get the file name
             sprintf(output_buffer, "%s_results_%i.dat", file_title, i);
             
-            cout << "top pointCount: " << pointCount << endl;
-            for (int i=0; i<pointCount; i++){
-                cout << "top wasp_altitudeArr: " << wasp_altitudeArr[i] << endl;
-            }
+            //cout << "top pointCount: " << pointCount << endl;
             
             // Open the file in read mode
             ifstream temp(output_buffer);
@@ -327,7 +322,6 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
                     //Stream to netCDF
                     rayStartIdx.push_back(rayNumber);
                     rayCountIdx.push_back(1);
-                    cout << "rayNumber: " << rayNumber << endl;
             
                     thetaNcVar.putVar(rayStartIdx, rayCountIdx, &thetaVar);    
                     wasp_takeoff_angleNcVar.putVar(rayStartIdx, rayCountIdx, &wasp_takeoff_angleVar);
@@ -378,10 +372,8 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
                 
                 getline(temp, line);
                 while(!temp.eof()){
+                    //The line subsequent to an empty line signals the start of the next ray
                     if(line.empty() && moreData){
-                        //The line subsequent to an empty line signals the start of the next ray
-                        cout << "empty line: " << line << endl;
-              
                         //Stream to netCDF
                         pointStartIdx.push_back(pointRayNumber);
                         pointStartIdx.push_back(0);
@@ -390,8 +382,6 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
                         // If the ray has <600 points, use the min
                         // number of points found
                         pointCountIdx.push_back(min(600, pointCount)); 
-
-                        cout << "pointRayNumber: " << pointRayNumber << endl;
 
                         // Write the data to the file
                         wasp_altitudeVar.putVar(pointStartIdx, pointCountIdx, wasp_altitudeArr);
@@ -755,7 +745,7 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
 
     }// End omp parallelization
 
-    cout << "Parallel section complete. rayCount = " << rayCount << ", max points = " << maxPoints <<endl;
+    cout << "Parallel section complete. \nTotal number of rays: " << rayCount << ". \nMax points propogated along an a ray: " << maxPoints <<endl;
 
     GeoAcGlobal_NetCdf(&maxPoints, &phi_bounds, &theta_bounds, &bounces, file_title, &num_threads, WriteRays, WriteCaustics);
 
