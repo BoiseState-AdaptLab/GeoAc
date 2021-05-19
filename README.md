@@ -9,24 +9,35 @@ using an inhomogeneous moving background medium.  The three dimensional propagat
 include methods to model propagation in a Cartesian coordinate system as well as a spherical 
 coordinate system which incorporates the curvature of the earth. 
 
-See manual for more information.
-___________________________________________
-___________________________________________
+This fork is a modified version of GeoAc to meet the needs of the workflow of the [IonoSeis](https://www.mdpi.com/2073-4433/10/8/443) modelling framework. 
+Only 3D Stratified Global Propogation with the `-prop` option is currently supported
 
-Modules required to run on R2
-
- - slurm/17.11.12 
- - gcc/7.2.0 
- - openmpi4/gcc/4.0.1 
- - hdf5/gcc/1.10.5
- - netcdf/gcc/openmpi/4.7.4
+See [manual](https://github.com/BoiseState-AdaptLab/GeoAc/blob/main/GeoAc_Manual.pdf) for more information (Section 2.3).
 
 
-___________________________________________
-___________________________________________
-References
+## Installation
+
+### On Boise State's R2 cluster
+
+* Clone the repository
+* The following modules are required:
+  * slurm/17.11.12 
+  * gcc/7.2.0 
+  * openmpi4/gcc/4.0.1 
+  * hdf5/gcc/1.10.5
+  * netcdf/gcc/openmpi/4.7.4
+* Run the `modules.sh` script to load the modules
+* Run `make GeoAcGlobal` or `make all` to make the executable
+* Run `make install` to install the executable in `/usr/local/bin`
 
 
+## Running GeoAc
+* Modify the `run_example.sh` script with your choice of input parameters
+* Modify the `geoac_openmp.bash` script to suit your requirements
+* Run `sbatch geoac_openmp.bash`
+* The output is saved as `GeoAcResultsAndRaypaths.nc` and two DAT files `WASP_raypaths_Xthreads.dat` and `WASP_results_Xthreads.dat` where `X` is the number of threads specified in `run_example.sh`
+
+## References
 
 Keys, Robert G. "Cubic convolution interpolation for digital image processing." Acoustics, Speech and Signal Processing, IEEE Transactions on 29.6 (1981): 1153-1160.
 
