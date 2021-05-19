@@ -56,62 +56,19 @@ void GeoAcGlobal_Usage(){
     cout << '\t' << '\t' << "WriteAtmo"         << '\t' << "True/False"         << '\t' << "False" << '\n';
     cout << '\t' << '\t' << "WriteRays"         << '\t' << "True/False"         << '\t' << "True" << '\n' << '\n';
     
-    cout << '\t' << "-interactive (set a fixed source location and select individual ray paths to generate)" << '\n';
-    cout << '\t' << '\t' << "Parameter"  << '\t' << "Units" << '\t' << '\t' << "Default Value" << '\n';
-    cout << '\t' << '\t' << "---------------------------------------------" << '\n';
-    cout << '\t' << '\t' << "lat_src"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "30.0" << '\n';
-    cout << '\t' << '\t' << "lon_src"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "0.0" << '\n';
-    cout << '\t' << '\t' << "z_src"             << '\t' << '\t' << "km"         << '\t' << '\t' << "0.0" << '\n' << '\n';   
-    
-    cout << '\t' << "-eig_search (Search for all eigenrays connecting a source at (lat_src, lon_src, z_src) to a receiver " << '\n';
-    cout << '\t' << '\t' << '\t' << "at (lat_rcvr, lon_rcvr, z_grnd) which have inclinations and ground reflections within specified limits)" << '\n';
-    cout << '\t' << '\t' << "Parameter"  << '\t' << "Units" << '\t' << '\t' << "Default Value" << '\n';
-    cout << '\t' << '\t' << "---------------------------------------------" << '\n';
-    cout << '\t' << '\t' << "theta_min"         << '\t' << "degrees"            << '\t' << '\t' << "1.0" << '\n';
-    cout << '\t' << '\t' << "theta_max"         << '\t' << "degrees"            << '\t' << '\t' << "45.0" << '\n';
-    cout << '\t' << '\t' << "bnc_min"           << '\t' << '\t' << "integer"    << '\t' << '\t' << "0" << '\n';
-    cout << '\t' << '\t' << "bnc_max"           << '\t' << '\t' << "integer"    << '\t' << '\t' << "0" << '\n';
-    cout << '\t' << '\t' << "bounces"           << '\t' << '\t' << "See Manual" << '\t' << "0" << '\n';
-    cout << '\t' << '\t' << "lat_src"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "30.0" << '\n';
-    cout << '\t' << '\t' << "lon_src"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "0.0" << '\n';
-    cout << '\t' << '\t' << "z_src"             << '\t' << '\t' << "km"         << '\t' << '\t' << "0.0" << '\n';
-    cout << '\t' << '\t' << "lat_rcvr"          << '\t' << "degrees"            << '\t' << '\t' << "30" << '\n';
-    cout << '\t' << '\t' << "lon_rcvr"          << '\t' << "degrees"            << '\t' << '\t' << "-2.5" << '\n';
-    cout << '\t' << '\t' << "Verbose"           << '\t' << '\t' << "True/False" << '\t' << "False" << '\n';
-    cout << '\t' << '\t' << "iterations"        << '\t' << "integer"            << '\t' << '\t' << "25" << '\n';
-    cout << '\t' << '\t' << "azimuth_err_lim"   << '\t' << "degrees"            << '\t' << '\t' << "2.0" << '\n' << '\n';
-    
-    cout << '\t' << "-eig_direct (Search for a single eigenray connecting a source at (lat_src, lon_src, z_src) to a receiver " << '\n';
-    cout << '\t' << '\t' << '\t' << "at (lat_rcvr, lon_rcvr, z_grnd) near an estiamted azimuth and inclination assuming a specific number of ground reflections)" << '\n';
-    cout << '\t' << '\t' << "Parameter"  << '\t' << "Units" << '\t' << '\t' << "Default Value" << '\n';
-    cout << '\t' << '\t' << "---------------------------------------------" << '\n';
-    cout << '\t' << '\t' << "theta_est"         << '\t' << "degrees"            << '\t' << '\t' << "15.0" << '\n';
-    cout << '\t' << '\t' << "phi_est"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "great circle bearing from source to receiver" << '\n';
-    cout << '\t' << '\t' << "bounces"           << '\t' << '\t' << "integer"    << '\t' << '\t' << "2" << '\n';
-    cout << '\t' << '\t' << "lat_src"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "30.0" << '\n';
-    cout << '\t' << '\t' << "lon_src"           << '\t' << '\t' << "degrees"    << '\t' << '\t' << "0.0" << '\n';
-    cout << '\t' << '\t' << "z_src"             << '\t' << '\t' << "km"         << '\t' << '\t' << "0.0" << '\n';
-    cout << '\t' << '\t' << "lat_rcvr"          << '\t' << "degrees"            << '\t' << '\t' << "30" << '\n';
-    cout << '\t' << '\t' << "lon_rcvr"          << '\t' << "degrees"            << '\t' << '\t' << "10.0" << '\n';
-    cout << '\t' << '\t' << "Verbose"           << '\t' << '\t' << "True/False" << '\t' << "False" << '\n';
-    cout << '\t' << '\t' << "iterations"        << '\t' << "integer"            << '\t' << '\t' << "25" << '\n' << '\n';
-
     cout << '\t' << "Additional Parameters"  << '\t' << "Units/Options" << '\t' << "Default Value" << '\n';
     cout << '\t' << "---------------------------------------------" << '\n';
     cout << '\t' << "freq"              << '\t' << '\t' << '\t' << "Hz"         << '\t' << '\t' << "0.1" << '\n';
     cout << '\t' << "abs_coeff"         << '\t' << '\t' << "scalar"             << '\t' << '\t' << "0.3" << '\n';
     cout << '\t' << "z_grnd"            << '\t' << '\t' << '\t' << "km"         << '\t' << '\t' << "0.0" << '\n';
     cout << '\t' << "profile_format"    << '\t' << '\t' << "See Manual"         << '\t' << "zTuvdp" << '\n';
-    cout << '\t' << "WriteCaustics*"    << '\t' << '\t' << "True/False"         << '\t' << "False" << '\n';
-    cout << '\t' << "CalcAmp*"          << '\t' << '\t' << "True/False"         << '\t' << "True" << '\n';
+    cout << '\t' << "CalcAmp"          << '\t' << '\t' << "True/False"         << '\t' << "True" << '\n';
     cout << '\t' << "alt_max"           << '\t' << '\t' << '\t' << "km"         << '\t' << '\t' << "Interpolation Max" << '\n';
     cout << '\t' << "rng_max"           << '\t' << '\t' << '\t' << "km"         << '\t' << '\t' << "10,000" << '\n' << '\n';
-    cout << '\t' << "* denotes parameters not available in eigenray methods." << '\n' << '\n';
     
     cout << "Examples:" << '\n';
     cout << '\t' << "./GeoAcGlobal -prop ToyAtmo.met bounces=5 azimuth=-90.0 rng_max=1500.0" << '\n';
     cout << '\t' << "./GeoAcGlobal -prop ToyAtmo.met lat_src=41.131 lon_src=-112.896 bounces=0 phi_min=-120.0 phi_max=-60.0 phi_step=2.0 WriteRays=False" << '\n';
-    cout << '\t' << "./GeoAcGlobal -eig_search ToyAtmo.met lat_src=41.131 lon_src=-112.896 lat_rcvr=38.430 lon_rcvr=-118.304 verbose=True" << '\n' << '\n';
     
 }
 
@@ -159,20 +116,6 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
         final_raypaths << '\t' << "wasp_arrival_time [s]"; //Travel time
         final_raypaths << '\n';
     }
-
-
-    // if (WriteCaustics){
-    //     for (int j = 0; j < *bounces; j++){
-    //         sprintf(output_buffer, "%s_caustics-path%i_%ithreads.dat", *file_title, j, *num_threads);
-    //         final_caustics[j].open(output_buffer);
-    //         final_caustics[j] << "# z [km]";
-    //         final_caustics[j] << '\t' << "Lat [deg]";
-    //         final_caustics[j] << '\t' << "Long [deg]";
-    //         final_caustics[j] << '\t' << "Travel Time [s]";
-    //         final_caustics[j] << '\n';
-    //     }
-    // }
-
 
 
     // These doubles contain a ray's metadata
@@ -453,16 +396,6 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
                 remove(output_buffer);
             }
 
-            // // Repeat for each caustics bounce file
-            // if (WriteCaustics){
-            //     for (int j = 0; j < bounces; j++){
-            //         sprintf(output_buffer, "%s_caustics-path%i_%i.dat", file_title, j, i);
-            //         ifstream temp(output_buffer);
-            //         final_caustics[j] << temp.rdbuf();
-            //         temp.close();
-            //         remove(output_buffer);
-            //     }
-            // }
         }
     }
     catch(NcException& e)
@@ -474,10 +407,6 @@ void GeoAcGlobal_NetCdf(int* maxPoints, int* phi_bounds, int* theta_bounds,
     // Close all files
     final_results.close();
     final_raypaths.close();
-  
-    // for (int j = 0; j < *bounces; j++){
-    //     final_caustics[j].close();
-    // }    
 }
 
 
@@ -603,17 +532,6 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
             sprintf(output_buffer, "%s_raypaths_%i.dat", file_title, i);
             raypaths[i].open(output_buffer);
         }
-
-        /*
-        // Check if we should write to caustics files
-        if (WriteCaustics){
-            // Each thread (i) has a file for each bounce (j)
-            for (int j = 0; j < bounces; j++){
-                sprintf(output_buffer, "%s_caustics-path%i_%i.dat", file_title, j, i);
-                caustics[i][j].open(output_buffer);
-            }
-        } 
-        */
     }
 
     //cout << omp_get_max_threads() << endl;
@@ -736,12 +654,11 @@ void GeoAcGlobal_RunProp(char* inputs[], int count){
         // Close files for this specific thread
         raypaths[tid].close();
         results[tid].close();
-/*
+        
         // Close the caustics files for each bounce
         for (int i = 0; i < bounces; i++){
           caustics[tid][i].close();
         }
-*/
 
     }// End omp parallelization
 
@@ -765,15 +682,12 @@ int main(int argc, char* argv[]){
         GeoAcGlobal_RunProp(argv, argc);
     
     } else if (strncmp(argv[1], "-interactive",12) == 0){
-        //GeoAcGlobal_RunInteractive(argv, argc);
         cout << "Not supported. " << endl;
         
     } else if (strncmp(argv[1], "-eig_search",11) == 0){
-        //GeoAcGlobal_RunEigSearch(argv, argc);
         cout << "Not supported. " << endl;
         
     } else if (strncmp(argv[1], "-eig_direct",11) == 0){
-        //GeoAcGlobal_RunEigDirect(argv, argc);
         cout << "Not supported. " << endl;
         
     } else {
