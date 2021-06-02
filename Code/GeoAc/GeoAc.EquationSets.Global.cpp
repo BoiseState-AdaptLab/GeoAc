@@ -233,9 +233,10 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
     
     // Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
-    sources.c = c(r,theta,phi,spl.Temp_Spline);
-    sources.w = w(r,theta,phi);
-    sources.v = v(r,theta,phi,spl.Windv_Spline);
+    //sources.c = c(r,theta,phi,spl.Temp_Spline);
+    //sources.w = w(r,theta,phi);
+    //sources.v = v(r,theta,phi,spl.Windv_Spline);
+    #include "codegen.c"
     sources.u = u(r,theta,phi, spl.Windu_Spline);
     
     sources.dc[0] = c_diff(r,theta,phi,0,spl.Temp_Spline);
