@@ -13,7 +13,7 @@ GeoAcGlobal:
 all: GeoAcGlobal 
 
 clean: 
-	rm GeoAcGlobal 
+	rm -f GeoAcGlobal 
 
 install: GeoAcGlobal 
 	install -m 0755 GeoAcGlobal ${INSTALL_DIR}
