@@ -89,6 +89,46 @@
 #undef s88
 #undef s89
 #undef s90
+#undef s91
+#undef s92
+#undef s93
+#undef s94
+#undef s95
+#undef s96
+#undef s97
+#undef s98
+#undef s99
+#undef s100
+#undef s101
+#undef s102
+#undef s103
+#undef s104
+#undef s105
+#undef s106
+#undef s107
+#undef s108
+#undef s109
+#undef s110
+#undef s111
+#undef s112
+#undef s113
+#undef s114
+#undef s115
+#undef s116
+#undef s117
+#undef s118
+#undef s119
+#undef s120
+#undef s121
+#undef s122
+#undef s123
+#undef s124
+#undef s125
+#undef s126
+#undef s127
+#undef s128
+#undef s129
+#undef s130
 #define s0(__x0)   double _iegen_2r = r; 
 #define s1(__x0)   double _iegen_2theta = theta; 
 #define s2(__x0)   double _iegen_2phi = phi; 
@@ -180,6 +220,46 @@
 #define s88(__x0)   if(_iegen_14n==0){_iegen_14c_diff_return = gamR / (2.0 * _iegen_14c_return) * _iegen_14eval_spline_df_return;} 
 #define s89(__x0)   sources.dc[0] = _iegen_14c_diff_return; 
 #define s90(__x0)   sources.dw[0] = 0; 
+#define s91(__x0)   double _iegen_17r = r; 
+#define s92(__x0)   double _iegen_17theta = theta; 
+#define s93(__x0)   double _iegen_17phi = phi; 
+#define s94(__x0)   int _iegen_17n = 0; 
+#define s95(__x0)   NaturalCubicSpline_1D & _iegen_17Windv_Spline = spl.Windv_Spline; 
+#define s96(__x0)   double _iegen_17r_eval = min(_iegen_17r, r_max); _iegen_17r_eval = max(_iegen_17r_eval, r_min); 
+#define s97(__x0)   double _iegen_17v_diff_return = 0.0 
+#define s98(__x0)   double _iegen_17_iegen_16x = _iegen_17r_eval; 
+#define s99(__x0)   NaturalCubicSpline_1D & _iegen_17_iegen_16Spline = _iegen_17Windv_Spline; 
+#define s100(__x0)   double _iegen_17_iegen_16_iegen_15x = _iegen_17_iegen_16x; 
+#define s101(__x0)   double* _iegen_17_iegen_16_iegen_15x_vals = _iegen_17_iegen_16Spline.x_vals; 
+#define s102(__x0)   int _iegen_17_iegen_16_iegen_15length = _iegen_17_iegen_16Spline.length; 
+#define s103(__x0)   int& _iegen_17_iegen_16_iegen_15prev = _iegen_17_iegen_16Spline.accel; 
+#define s104(__x0, i, __x2)   if(_iegen_17_iegen_16_iegen_15x >= _iegen_17_iegen_16_iegen_15x_vals[i] && _iegen_17_iegen_16_iegen_15x <= _iegen_17_iegen_16_iegen_15x_vals[i+1]) _iegen_17_iegen_16_iegen_15prev = i; 
+#define s105(__x0)   int _iegen_17_iegen_16k = _iegen_17_iegen_16_iegen_15prev; 
+#define s106(__x0)   double _iegen_17_iegen_16eval_spline_df_return = 0.0; 
+#define s107(__x0)   if(_iegen_17_iegen_16k < _iegen_17_iegen_16Spline.length){double _iegen_17_iegen_16X = (_iegen_17_iegen_16x - _iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k])/(_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k]); double _iegen_17_iegen_16A = _iegen_17_iegen_16Spline.slopes[_iegen_17_iegen_16k] * (_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k+1] -_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k]) - (_iegen_17_iegen_16Spline.f_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.f_vals[_iegen_17_iegen_16k]); double _iegen_17_iegen_16B = -_iegen_17_iegen_16Spline.slopes[_iegen_17_iegen_16k+1] * (_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k]) + (_iegen_17_iegen_16Spline.f_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.f_vals[_iegen_17_iegen_16k]); _iegen_17_iegen_16eval_spline_df_return = (_iegen_17_iegen_16Spline.f_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.f_vals[_iegen_17_iegen_16k])/(_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k]) + (1.0 - 2.0 * _iegen_17_iegen_16X) * (_iegen_17_iegen_16A * (1.0 - _iegen_17_iegen_16X) + _iegen_17_iegen_16B * _iegen_17_iegen_16X)/(_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k])+ _iegen_17_iegen_16X * (1.0 - _iegen_17_iegen_16X) * (_iegen_17_iegen_16B - _iegen_17_iegen_16A)/(_iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k+1] - _iegen_17_iegen_16Spline.x_vals[_iegen_17_iegen_16k]);} 
+#define s108(__x0)   double _iegen_17eval_Spline_df_return = _iegen_17_iegen_16eval_spline_df_return; 
+#define s109(__x0)   if(_iegen_17n==0){_iegen_17v_diff_return = _iegen_17eval_Spline_df_return;} 
+#define s110(__x0)   sources.dv[0] = _iegen_17v_diff_return; 
+#define s111(__x0)   double _iegen_20r = r; 
+#define s112(__x0)   double _iegen_20theta = theta; 
+#define s113(__x0)   double _iegen_20phi = phi; 
+#define s114(__x0)   int _iegen_20n = 0; 
+#define s115(__x0)   NaturalCubicSpline_1D & _iegen_20Windu_Spline = spl.Windu_Spline; 
+#define s116(__x0)   double _iegen_20r_eval = min(_iegen_20r, r_max); _iegen_20r_eval = max(_iegen_20r_eval, r_min); 
+#define s117(__x0)   double _iegen_20u_diff_return = 0.0 
+#define s118(__x0)   double _iegen_20_iegen_19x = _iegen_20r_eval; 
+#define s119(__x0)   NaturalCubicSpline_1D & _iegen_20_iegen_19Spline = _iegen_20Windu_Spline; 
+#define s120(__x0)   double _iegen_20_iegen_19_iegen_18x = _iegen_20_iegen_19x; 
+#define s121(__x0)   double* _iegen_20_iegen_19_iegen_18x_vals = _iegen_20_iegen_19Spline.x_vals; 
+#define s122(__x0)   int _iegen_20_iegen_19_iegen_18length = _iegen_20_iegen_19Spline.length; 
+#define s123(__x0)   int& _iegen_20_iegen_19_iegen_18prev = _iegen_20_iegen_19Spline.accel; 
+#define s124(__x0, i, __x2)   if(_iegen_20_iegen_19_iegen_18x >= _iegen_20_iegen_19_iegen_18x_vals[i] && _iegen_20_iegen_19_iegen_18x <= _iegen_20_iegen_19_iegen_18x_vals[i+1]) _iegen_20_iegen_19_iegen_18prev = i; 
+#define s125(__x0)   int _iegen_20_iegen_19k = _iegen_20_iegen_19_iegen_18prev; 
+#define s126(__x0)   double _iegen_20_iegen_19eval_spline_df_return = 0.0; 
+#define s127(__x0)   if(_iegen_20_iegen_19k < _iegen_20_iegen_19Spline.length){double _iegen_20_iegen_19X = (_iegen_20_iegen_19x - _iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k])/(_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k]); double _iegen_20_iegen_19A = _iegen_20_iegen_19Spline.slopes[_iegen_20_iegen_19k] * (_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k+1] -_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k]) - (_iegen_20_iegen_19Spline.f_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.f_vals[_iegen_20_iegen_19k]); double _iegen_20_iegen_19B = -_iegen_20_iegen_19Spline.slopes[_iegen_20_iegen_19k+1] * (_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k]) + (_iegen_20_iegen_19Spline.f_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.f_vals[_iegen_20_iegen_19k]); _iegen_20_iegen_19eval_spline_df_return = (_iegen_20_iegen_19Spline.f_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.f_vals[_iegen_20_iegen_19k])/(_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k]) + (1.0 - 2.0 * _iegen_20_iegen_19X) * (_iegen_20_iegen_19A * (1.0 - _iegen_20_iegen_19X) + _iegen_20_iegen_19B * _iegen_20_iegen_19X)/(_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k])+ _iegen_20_iegen_19X * (1.0 - _iegen_20_iegen_19X) * (_iegen_20_iegen_19B - _iegen_20_iegen_19A)/(_iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k+1] - _iegen_20_iegen_19Spline.x_vals[_iegen_20_iegen_19k]);} 
+#define s128(__x0)   double _iegen_20eval_Spline_df_return = _iegen_20_iegen_19eval_spline_df_return; 
+#define s129(__x0)   if(_iegen_20n==0){_iegen_20u_diff_return = _iegen_20eval_Spline_df_return;} 
+#define s130(__x0)   sources.du[0] = _iegen_20u_diff_return; 
 
 
 //t1 = 0; 
@@ -287,6 +367,50 @@ s87(88);
 s88(89);
 s89(90);
 s90(91);
+s91(92);
+s92(93);
+s93(94);
+s94(95);
+s95(96);
+s96(97);
+s97(98);
+s98(99);
+s99(100);
+s100(101);
+s101(102);
+s102(103);
+s103(104);
+for(t2 = 0; t2 <= _iegen_17_iegen_16_iegen_15length-1; t2++) {
+  s104(105,t2,0);
+}
+s105(106);
+s106(107);
+s107(108);
+s108(109);
+s109(110);
+s110(111);
+s111(112);
+s112(113);
+s113(114);
+s114(115);
+s115(116);
+s116(117);
+s117(118);
+s118(119);
+s119(120);
+s120(121);
+s121(122);
+s122(123);
+s123(124);
+for(t2 = 0; t2 <= _iegen_20_iegen_19_iegen_18length-1; t2++) {
+  s124(125,t2,0);
+}
+s125(126);
+s126(127);
+s127(128);
+s128(129);
+s129(130);
+s130(131);
 
 #undef s0
 #undef s1
@@ -379,3 +503,43 @@ s90(91);
 #undef s88
 #undef s89
 #undef s90
+#undef s91
+#undef s92
+#undef s93
+#undef s94
+#undef s95
+#undef s96
+#undef s97
+#undef s98
+#undef s99
+#undef s100
+#undef s101
+#undef s102
+#undef s103
+#undef s104
+#undef s105
+#undef s106
+#undef s107
+#undef s108
+#undef s109
+#undef s110
+#undef s111
+#undef s112
+#undef s113
+#undef s114
+#undef s115
+#undef s116
+#undef s117
+#undef s118
+#undef s119
+#undef s120
+#undef s121
+#undef s122
+#undef s123
+#undef s124
+#undef s125
+#undef s126
+#undef s127
+#undef s128
+#undef s129
+#undef s130

@@ -241,8 +241,8 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     //sources.dc[0] = c_diff(r,theta,phi,0,spl.Temp_Spline);
     //sources.dw[0] = w_diff(r,theta,phi,0);
     //sources.dv[0] = v_diff(r,theta,phi,0,spl.Windv_Spline);
+    //sources.du[0] = u_diff(r,theta,phi,0,spl.Windu_Spline);
     #include "codegen.c"
-    sources.du[0] = u_diff(r,theta,phi,0,spl.Windu_Spline);
     
     sources.dc[1] = c_diff(r,theta,phi,1,spl.Temp_Spline);
     sources.dw[1] = w_diff(r,theta,phi,1);
