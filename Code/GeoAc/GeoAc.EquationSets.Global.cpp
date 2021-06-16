@@ -247,12 +247,12 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     //sources.dw[1] = w_diff(r,theta,phi,1);
     //sources.dv[1] = v_diff(r,theta,phi,1,spl.Windv_Spline);
     //sources.du[1] = u_diff(r,theta,phi,1,spl.Windu_Spline);
-    #include "codegen.c"
     
-    sources.dc[2] = c_diff(r,theta,phi,2,spl.Temp_Spline);
-    sources.dw[2] = w_diff(r,theta,phi,2);
-    sources.dv[2] = v_diff(r,theta,phi,2,spl.Windv_Spline);
-    sources.du[2] = u_diff(r,theta,phi,2,spl.Windu_Spline);
+    //sources.dc[2] = c_diff(r,theta,phi,2,spl.Temp_Spline);   
+    //sources.dw[2] = w_diff(r,theta,phi,2);
+    //sources.dv[2] = v_diff(r,theta,phi,2,spl.Windv_Spline);
+    //sources.du[2] = u_diff(r,theta,phi,2,spl.Windu_Spline);
+    #include "codegen.c"
 
     // Update Eikonal vector magnitude and group velocity
     sources.nu_mag = 	 sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
