@@ -88,6 +88,7 @@
 #undef s87
 #undef s88
 #undef s89
+#undef s90
 #define s0(__x0)   double _iegen_2r = r; 
 #define s1(__x0)   double _iegen_2theta = theta; 
 #define s2(__x0)   double _iegen_2phi = phi; 
@@ -178,6 +179,7 @@
 #define s87(__x0)   double _iegen_14eval_spline_df_return = _iegen_14_iegen_13eval_spline_df_return; 
 #define s88(__x0)   if(_iegen_14n==0){_iegen_14c_diff_return = gamR / (2.0 * _iegen_14c_return) * _iegen_14eval_spline_df_return;} 
 #define s89(__x0)   sources.dc[0] = _iegen_14c_diff_return; 
+#define s90(__x0)   sources.dw[0] = 0; 
 
 
 //t1 = 0; 
@@ -284,6 +286,7 @@ s86(87);
 s87(88);
 s88(89);
 s89(90);
+s90(91);
 
 #undef s0
 #undef s1
@@ -375,3 +378,4 @@ s89(90);
 #undef s87
 #undef s88
 #undef s89
+#undef s90
