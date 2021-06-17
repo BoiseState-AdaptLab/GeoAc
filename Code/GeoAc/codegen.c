@@ -208,6 +208,13 @@
 #undef s207
 #undef s208
 #undef s209
+#undef s210
+#undef s211
+#undef s212
+#undef s213
+#undef s214
+#undef s215
+#undef s216
 #define s0(__x0)   double _iegen_2r = r; 
 #define s1(__x0)   double _iegen_2theta = theta; 
 #define s2(__x0)   double _iegen_2phi = phi; 
@@ -418,6 +425,13 @@
 #define s207(__x0)   double _iegen_23eval_Spline_df_return = _iegen_23_iegen_19eval_spline_df_return; 
 #define s208(__x0)   if(_iegen_23n==0){_iegen_23u_diff_return = _iegen_23eval_Spline_df_return;} 
 #define s209(__x0)   sources.du[1] = _iegen_23u_diff_return; 
+#define s210(__x0)   sources.nu_mag = sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]); 
+#define s211(__x0)   sources.c_gr[0] =  sources.c*nu[0]/sources.nu_mag + sources.w; 
+#define s212(__x0)   sources.c_gr[1] =  sources.c*nu[1]/sources.nu_mag + sources.v; 
+#define s213(__x0)   sources.c_gr[2] =  sources.c*nu[2]/sources.nu_mag + sources.u; 
+#define s214(__x0)   sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2)); 
+#define s215(__x0)   sources.GeoCoeff[0] = 1.0; 
+#define s216(__x0)   sources.GeoCoeff[1] = 1.0/r 
 
 
 //t1 = 0; 
@@ -656,6 +670,13 @@ s206(207);
 s207(208);
 s208(209);
 s209(210);
+s210(211);
+s211(212);
+s212(213);
+s213(214);
+s214(215);
+s215(216);
+s216(217);
 
 #undef s0
 #undef s1
@@ -867,3 +888,10 @@ s209(210);
 #undef s207
 #undef s208
 #undef s209
+#undef s210
+#undef s211
+#undef s212
+#undef s213
+#undef s214
+#undef s215
+#undef s216

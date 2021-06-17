@@ -252,20 +252,20 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     //sources.dw[2] = w_diff(r,theta,phi,2);
     //sources.dv[2] = v_diff(r,theta,phi,2,spl.Windv_Spline);
     //sources.du[2] = u_diff(r,theta,phi,2,spl.Windu_Spline);
-    #include "codegen.c"
 
     // Update Eikonal vector magnitude and group velocity
-    sources.nu_mag = 	 sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
+    //sources.nu_mag = sqrt( nu[0]*nu[0] + nu[1]*nu[1] + nu[2]*nu[2]);
  
-    sources.c_gr[0] =  sources.c*nu[0]/sources.nu_mag + sources.w;
-    sources.c_gr[1] =  sources.c*nu[1]/sources.nu_mag + sources.v;
-    sources.c_gr[2] =  sources.c*nu[2]/sources.nu_mag + sources.u;
+    //sources.c_gr[0] =  sources.c*nu[0]/sources.nu_mag + sources.w;
+    //sources.c_gr[1] =  sources.c*nu[1]/sources.nu_mag + sources.v;
+    //sources.c_gr[2] =  sources.c*nu[2]/sources.nu_mag + sources.u;
     
-    sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2));
+    //sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2));
     
     // Update geometric coefficients
-    sources.GeoCoeff[0] = 1.0;
-    sources.GeoCoeff[1] = 1.0/r;
+    //sources.GeoCoeff[0] = 1.0;
+    //sources.GeoCoeff[1] = 1.0/r;
+    #include "codegen.c"
     sources.GeoCoeff[2] = 1.0/(r*cos(theta));
     
     // Update Eikonal geometric terms
