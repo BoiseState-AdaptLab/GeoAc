@@ -300,6 +300,7 @@
 #undef s299
 #undef s300
 #undef s301
+#undef s302
 #define s0(__x0)   double _iegen_2r = r; 
 #define s1(__x0)   double _iegen_2theta = theta; 
 #define s2(__x0)   double _iegen_2phi = phi; 
@@ -595,13 +596,14 @@
 #define s292(__x0)   sources.c_gr[2] =  sources.c*nu[2]/sources.nu_mag + sources.u; 
 #define s293(__x0)   sources.c_gr_mag = sqrt(pow(sources.c_gr[0],2) + pow(sources.c_gr[1],2) + pow(sources.c_gr[2],2)); 
 #define s294(__x0)   sources.GeoCoeff[0] = 1.0; 
-#define s295(__x0)   sources.GeoCoeff[1] = 1.0/r 
+#define s295(__x0)   sources.GeoCoeff[1] = 1.0/r; 
 #define s296(__x0)   sources.GeoCoeff[2] = 1.0/(r*cos(theta)); 
 #define s297(__x0)   sources.GeoTerms[0] = 0.0; 
 #define s298(__x0)   sources.GeoTerms[1] = (nu[0]*sources.v - nu[1]*sources.w); 
 #define s299(__x0)   sources.GeoTerms[2] = (nu[0]*sources.u - nu[2]*sources.w)*cos(theta) + (nu[1]*sources.u - nu[2]*sources.v)*sin(theta); 
 #define s300(__x0)   sources.GeoTerms[0] += 1.0/r * (nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2]); 
 #define s301(__x0)   sources.GeoTerms[1] += -nu[0]*sources.c_gr[1] + nu[2]*sources.c_gr[2]*tan(theta); 
+#define s302(__x0)   sources.GeoTerms[2] += -sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta)); 
 
 
 //t1 = 0; 
@@ -940,6 +942,7 @@ s298(299);
 s299(300);
 s300(301);
 s301(302);
+s302(303);
 
 #undef s0
 #undef s1
@@ -1243,3 +1246,4 @@ s301(302);
 #undef s299
 #undef s300
 #undef s301
+#undef s302

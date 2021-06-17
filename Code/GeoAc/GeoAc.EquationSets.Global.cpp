@@ -274,8 +274,8 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     
     //sources.GeoTerms[0] += 1.0/r * (nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2]);
     //sources.GeoTerms[1] += -nu[0]*sources.c_gr[1] + nu[2]*sources.c_gr[2]*tan(theta);
+    //sources.GeoTerms[2] += -sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta));
     #include "codegen.c"
-    sources.GeoTerms[2] += -sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta));
     
     
     // The following code is only used if amplitudes are to be calculated; the above results are sufficient for producing ray geometry
