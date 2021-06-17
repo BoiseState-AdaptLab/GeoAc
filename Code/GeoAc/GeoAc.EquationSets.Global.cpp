@@ -265,16 +265,16 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     // Update geometric coefficients
     //sources.GeoCoeff[0] = 1.0;
     //sources.GeoCoeff[1] = 1.0/r;
-    #include "codegen.c"
-    sources.GeoCoeff[2] = 1.0/(r*cos(theta));
+    //sources.GeoCoeff[2] = 1.0/(r*cos(theta));
     
     // Update Eikonal geometric terms
-    sources.GeoTerms[0] = 0.0;
-    sources.GeoTerms[1] = (nu[0]*sources.v - nu[1]*sources.w);
-    sources.GeoTerms[2] = (nu[0]*sources.u - nu[2]*sources.w)*cos(theta) + (nu[1]*sources.u - nu[2]*sources.v)*sin(theta);
+    //sources.GeoTerms[0] = 0.0;
+    //sources.GeoTerms[1] = (nu[0]*sources.v - nu[1]*sources.w);
+    //sources.GeoTerms[2] = (nu[0]*sources.u - nu[2]*sources.w)*cos(theta) + (nu[1]*sources.u - nu[2]*sources.v)*sin(theta);
     
-    sources.GeoTerms[0] += 1.0/r * (nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2]);
-    sources.GeoTerms[1] += -nu[0]*sources.c_gr[1] + nu[2]*sources.c_gr[2]*tan(theta);
+    //sources.GeoTerms[0] += 1.0/r * (nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2]);
+    //sources.GeoTerms[1] += -nu[0]*sources.c_gr[1] + nu[2]*sources.c_gr[2]*tan(theta);
+    #include "codegen.c"
     sources.GeoTerms[2] += -sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta));
     
     
