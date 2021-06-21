@@ -229,8 +229,8 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
 			 SplineStruct &spl){
 
     // Extract ray location and eikonal vector components
-    double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
-    double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
+    //double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
+    //double nu[3] = {current_values[3], 	current_values[4], 		current_values[5]};
     
     // Update thermodynamic sound speed, winds and their r, theta, and phi derivatives
     //sources.c = c(r,theta,phi,spl.Temp_Spline);
@@ -275,17 +275,17 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     //sources.GeoTerms[0] += 1.0/r * (nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2]);
     //sources.GeoTerms[1] += -nu[0]*sources.c_gr[1] + nu[2]*sources.c_gr[2]*tan(theta);
     //sources.GeoTerms[2] += -sources.c_gr[2]*(nu[0]*cos(theta) + nu[1]*sin(theta));
-    #include "codegen.c"
     
     
     // The following code is only used if amplitudes are to be calculated; the above results are sufficient for producing ray geometry
-	double R_lt[3], R_lp[3], mu_lt[3], mu_lp[3];
+    //	double R_lt[3], R_lp[3], mu_lt[3], mu_lp[3];
+    #include "codegen.c"
 	if(GeoAc_CalcAmp){
 
-        R_lt[0]  = current_values[6];       R_lt[1]  = current_values[7];       R_lt[2]  = current_values[8];
-		mu_lt[0] = current_values[9];		mu_lt[1] = current_values[10];		mu_lt[2] = current_values[11];
-        R_lp[0]  = current_values[12];      R_lp[1]  = current_values[13];      R_lp[2]  = current_values[14];
-		mu_lp[0] = current_values[15];		mu_lp[1] = current_values[16];		mu_lp[2] = current_values[17];
+    // R_lt[0]  = current_values[6];       R_lt[1]  = current_values[7];       R_lt[2]  = current_values[8];
+    //	 	mu_lt[0] = current_values[9];		mu_lt[1] = current_values[10];		mu_lt[2] = current_values[11];
+    //      R_lp[0]  = current_values[12];      R_lp[1]  = current_values[13];      R_lp[2]  = current_values[14];
+    //		mu_lp[0] = current_values[15];		mu_lp[1] = current_values[16];		mu_lp[2] = current_values[17];
         
         // Update lt, lp, and second order derivatives of sound speed and winds
         sources.dc[3] = 0.0;  sources.dc[4] = 0.0;
