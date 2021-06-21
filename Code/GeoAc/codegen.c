@@ -308,6 +308,10 @@
 #undef s307
 #undef s308
 #undef s309
+#undef s310
+#undef s311
+#undef s312
+#undef s313
 #define s0(__x0)   double r = current_values[0], theta=current_values[1], phi=current_values[2]; 
 #define s1(__x0)   double nu[3] = {current_values[3], current_values[4], current_values[5]}; 
 #define s2(__x0)   double _iegen_2r = r; 
@@ -618,6 +622,10 @@
 #define s307(__x0)   mu_lt[0] = current_values[9];     mu_lt[1] = current_values[10];      mu_lt[2] = current_values[11]; 
 #define s308(__x0)   R_lp[0]  = current_values[12]; R_lp[1] = current_values[13]; R_lp[2]  = current_values[14]; 
 #define s309(__x0)   mu_lp[0] = current_values[15]; mu_lp[1] = current_values[16]; mu_lp[2] = current_values[17]; 
+#define s310(__x0)   sources.dc[3] = 0.0;  sources.dc[4] = 0.0; 
+#define s311(__x0)   sources.dw[3] = 0.0;  sources.dw[4] = 0.0; 
+#define s312(__x0)   sources.dv[3] = 0.0;  sources.dv[4] = 0.0; 
+#define s313(__x0)   sources.du[3] = 0.0;  sources.du[4] = 0.0; 
 
 
 //t1 = 0; 
@@ -963,14 +971,26 @@ s305(305);
 if (true == GeoAc_CalcAmp) {
   s306(306);
 }
-if (true == GeoAc_CalcAmp) {
+if (GeoAc_CalcAmp == true) {
   s307(307);
 }
 if (GeoAc_CalcAmp == true) {
   s308(308);
 }
-if (GeoAc_CalcAmp == true) {
+if (true == GeoAc_CalcAmp) {
   s309(309);
+}
+if (GeoAc_CalcAmp == true) {
+  s310(310);
+}
+if (true == GeoAc_CalcAmp) {
+  s311(311);
+}
+if (true == GeoAc_CalcAmp) {
+  s312(312);
+}
+if (true == GeoAc_CalcAmp) {
+  s313(313);
 }
 
 #undef s0
@@ -1283,3 +1303,7 @@ if (GeoAc_CalcAmp == true) {
 #undef s307
 #undef s308
 #undef s309
+#undef s310
+#undef s311
+#undef s312
+#undef s313
