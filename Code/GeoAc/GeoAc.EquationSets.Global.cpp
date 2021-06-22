@@ -279,7 +279,8 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     
     // The following code is only used if amplitudes are to be calculated; the above results are sufficient for producing ray geometry
     //	double R_lt[3], R_lp[3], mu_lt[3], mu_lp[3];
-	if(GeoAc_CalcAmp){
+     #include "codegen.c"
+     if(GeoAc_CalcAmp){
 
     // R_lt[0]  = current_values[6];       R_lt[1]  = current_values[7];       R_lt[2]  = current_values[8];
     //	 	mu_lt[0] = current_values[9];		mu_lt[1] = current_values[10];		mu_lt[2] = current_values[11];
@@ -291,7 +292,6 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
        // sources.dw[3] = 0.0;  sources.dw[4] = 0.0;
        // sources.dv[3] = 0.0;  sources.dv[4] = 0.0;
        // sources.du[3] = 0.0;  sources.du[4] = 0.0;
-       #include "codegen.c"
         for(int n = 0; n < 3; n++){
             sources.ddc[n][0] = 0.0;
             sources.ddw[n][0] = 0.0;
