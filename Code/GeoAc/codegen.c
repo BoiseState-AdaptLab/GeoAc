@@ -312,6 +312,14 @@
 #undef s311
 #undef s312
 #undef s313
+#undef s314
+#undef s315
+#undef s316
+#undef s317
+#undef s318
+#undef s319
+#undef s320
+#undef s321
 #define s0(__x0)   double r = current_values[0], theta=current_values[1], phi=current_values[2]; 
 #define s1(__x0)   double nu[3] = {current_values[3], current_values[4], current_values[5]}; 
 #define s2(__x0)   double _iegen_2r = r; 
@@ -626,6 +634,14 @@
 #define s311(__x0)   sources.dw[3] = 0.0;  sources.dw[4] = 0.0; 
 #define s312(__x0)   sources.dv[3] = 0.0;  sources.dv[4] = 0.0; 
 #define s313(__x0)   sources.du[3] = 0.0;  sources.du[4] = 0.0; 
+#define s314(__x0, n, __x2)   sources.ddc[n][0] = 0.0; 
+#define s315(__x0, n, __x2)   sources.ddw[n][0] = 0.0; 
+#define s316(__x0, n, __x2)   sources.ddv[n][0] = 0.0; 
+#define s317(__x0, n, __x2)   sources.ddu[n][0] = 0.0; 
+#define s318(__x0, n, __x2)   sources.ddc[n][1] = 0.0; 
+#define s319(__x0, n, __x2)   sources.ddw[n][1] = 0.0; 
+#define s320(__x0, n, __x2)   sources.ddv[n][1] = 0.0; 
+#define s321(__x0, n, __x2)   sources.ddu[n][1] = 0.0; 
 
 
 //t1 = 0; 
@@ -968,29 +984,25 @@ s302(302);
 s303(303);
 s304(304);
 s305(305);
-if (true == GeoAc_CalcAmp) {
+if (GeoAc_CalcAmp == 1) {
   s306(306);
-}
-if (GeoAc_CalcAmp == true) {
   s307(307);
-}
-if (GeoAc_CalcAmp == true) {
   s308(308);
-}
-if (true == GeoAc_CalcAmp) {
   s309(309);
-}
-if (GeoAc_CalcAmp == true) {
   s310(310);
-}
-if (true == GeoAc_CalcAmp) {
   s311(311);
-}
-if (true == GeoAc_CalcAmp) {
   s312(312);
-}
-if (true == GeoAc_CalcAmp) {
   s313(313);
+  for(t2 = 0; t2 <= 2; t2++) {
+    s314(314,t2,0);
+    s315(314,t2,1);
+    s316(314,t2,2);
+    s317(314,t2,3);
+    s318(314,t2,4);
+    s319(314,t2,5);
+    s320(314,t2,6);
+    s321(314,t2,7);
+  }
 }
 
 #undef s0
@@ -1307,3 +1319,11 @@ if (true == GeoAc_CalcAmp) {
 #undef s311
 #undef s312
 #undef s313
+#undef s314
+#undef s315
+#undef s316
+#undef s317
+#undef s318
+#undef s319
+#undef s320
+#undef s321
