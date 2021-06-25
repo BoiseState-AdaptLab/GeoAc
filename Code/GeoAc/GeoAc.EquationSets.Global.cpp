@@ -311,10 +311,10 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
             //sources.dv[3] += R_lt[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
             //sources.du[3] += R_lt[n]*u_diff(r,theta,phi,n,spl.Windu_Spline);
             
-            sources.dc[4] += R_lp[n]*c_diff(r,theta,phi,n,spl.Temp_Spline);
-            sources.dw[4] += R_lp[n]*w_diff(r,theta,phi,n);
-            sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
-            sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n,spl.Windu_Spline);
+            //sources.dc[4] += R_lp[n]*c_diff(r,theta,phi,n,spl.Temp_Spline);
+            //sources.dw[4] += R_lp[n]*w_diff(r,theta,phi,n);
+            //sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
+            //sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n,spl.Windu_Spline);
             
             for(int m = 0; m < 3; m++){
                 sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n, spl.Temp_Spline);
