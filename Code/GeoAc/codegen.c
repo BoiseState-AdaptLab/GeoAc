@@ -530,6 +530,28 @@
 #undef s529
 #undef s530
 #undef s531
+#undef s532
+#undef s533
+#undef s534
+#undef s535
+#undef s536
+#undef s537
+#undef s538
+#undef s539
+#undef s540
+#undef s541
+#undef s542
+#undef s543
+#undef s544
+#undef s545
+#undef s546
+#undef s547
+#undef s548
+#undef s549
+#undef s550
+#undef s551
+#undef s552
+#undef s553
 #define s0(__x0)   double r = current_values[0], theta=current_values[1], phi=current_values[2]; 
 #define s1(__x0)   double nu[3] = {current_values[3], current_values[4], current_values[5]}; 
 #define s2(__x0)   double _iegen_2r = r; 
@@ -1062,6 +1084,28 @@
 #define s529(__x0, n, __x2, m, __x4)   double _iegen_40eval_spline_df_return = _iegen_40_iegen_39eval_spline_df_return; 
 #define s530(__x0, n, __x2, m, __x4)   if(_iegen_40n1==0 && _iegen_40n2==0){_iegen_40c_ddiff_return = gamR / (2.0 * _iegen_40SndSpd) * _iegen_40eval_spline_ddf_return - pow(gamR,2)/(4.0*pow(_iegen_40SndSpd,3)) * pow(_iegen_40eval_spline_df_return,2);} 
 #define s531(__x0, n, __x2, m, __x4)   sources.ddc[m][0] += R_lt[n]*_iegen_40c_ddiff_return; 
+#define s532(__x0, n, __x2, m, __x4)   sources.ddw[m][0] += 0; 
+#define s533(__x0, n, __x2, m, __x4)   double _iegen_43r = r; 
+#define s534(__x0, n, __x2, m, __x4)   double _iegen_43theta = theta; 
+#define s535(__x0, n, __x2, m, __x4)   double _iegen_43phi = phi; 
+#define s536(__x0, n, __x2, m, __x4)   int _iegen_43n1 = loopM; 
+#define s537(__x0, n, __x2, m, __x4)   int _iegen_43n2 = loopN; 
+#define s538(__x0, n, __x2, m, __x4)   NaturalCubicSpline_1D & _iegen_43Windv_Spline = spl.Windv_Spline; 
+#define s539(__x0, n, __x2, m, __x4)   double _iegen_43r_eval = min(_iegen_43r, r_max); _iegen_43r_eval = max(_iegen_43r_eval, r_min); 
+#define s540(__x0, n, __x2, m, __x4)   double _iegen_43v_ddiff_return = 0.0 
+#define s541(__x0, n, __x2, m, __x4)   double _iegen_43_iegen_42x = _iegen_43r_eval; 
+#define s542(__x0, n, __x2, m, __x4)   struct NaturalCubicSpline_1D & _iegen_43_iegen_42Spline = _iegen_43Windv_Spline; 
+#define s543(__x0, n, __x2, m, __x4)   double _iegen_43_iegen_42_iegen_41x = _iegen_43_iegen_42x; 
+#define s544(__x0, n, __x2, m, __x4)   double* _iegen_43_iegen_42_iegen_41x_vals = _iegen_43_iegen_42Spline.x_vals; 
+#define s545(__x0, n, __x2, m, __x4)   int _iegen_43_iegen_42_iegen_41length = _iegen_43_iegen_42Spline.length; 
+#define s546(__x0, n, __x2, m, __x4)   int& _iegen_43_iegen_42_iegen_41prev = _iegen_43_iegen_42Spline.accel; 
+#define s547(__x0, n, __x2, m, __x4, i, __x6)   if(_iegen_43_iegen_42_iegen_41x >= _iegen_43_iegen_42_iegen_41x_vals[i] && _iegen_43_iegen_42_iegen_41x <= _iegen_43_iegen_42_iegen_41x_vals[i+1]) _iegen_43_iegen_42_iegen_41prev = i; 
+#define s548(__x0, n, __x2, m, __x4)   int _iegen_43_iegen_42k = _iegen_43_iegen_42_iegen_41prev; 
+#define s549(__x0, n, __x2, m, __x4)   double _iegen_43_iegen_42eval_Spline_ddf_return = 0.0; 
+#define s550(__x0, n, __x2, m, __x4)   if(_iegen_43_iegen_42k < _iegen_43_iegen_42Spline.length){ double _iegen_43_iegen_42X = (_iegen_43_iegen_42x - _iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k])/(_iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k+1] - _iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k]);double _iegen_43_iegen_42A = _iegen_43_iegen_42Spline.slopes[_iegen_43_iegen_42k] * (_iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k+1] - _iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k]) - (_iegen_43_iegen_42Spline.f_vals[_iegen_43_iegen_42k+1] - _iegen_43_iegen_42Spline.f_vals[_iegen_43_iegen_42k]);double _iegen_43_iegen_42B = -_iegen_43_iegen_42Spline.slopes[_iegen_43_iegen_42k+1] * (_iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k+1] - _iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k]) + (_iegen_43_iegen_42Spline.f_vals[_iegen_43_iegen_42k+1] - _iegen_43_iegen_42Spline.f_vals[_iegen_43_iegen_42k]); _iegen_43_iegen_42eval_Spline_ddf_return = 2.0 * (_iegen_43_iegen_42B - 2.0 * _iegen_43_iegen_42A + (_iegen_43_iegen_42A - _iegen_43_iegen_42B) * 3.0 * _iegen_43_iegen_42X) / pow(_iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k+1] - _iegen_43_iegen_42Spline.x_vals[_iegen_43_iegen_42k], 2);} 
+#define s551(__x0, n, __x2, m, __x4)   double _iegen_43eval_Spline_ddf_return = _iegen_43_iegen_42eval_Spline_ddf_return; 
+#define s552(__x0, n, __x2, m, __x4)   if(_iegen_43n1==0 && _iegen_43n2==0){_iegen_43v_ddiff_return = _iegen_43eval_Spline_ddf_return;} 
+#define s553(__x0, n, __x2, m, __x4)   sources.ddv[m][0] += R_lt[n]*_iegen_43v_ddiff_return; 
 
 
 //t1 = 0; 
@@ -1661,6 +1705,30 @@ if (GeoAc_CalcAmp == 1) {
       s529(315,t2,158,t4,48);
       s530(315,t2,158,t4,49);
       s531(315,t2,158,t4,50);
+      s532(315,t2,158,t4,51);
+      s533(315,t2,158,t4,52);
+      s534(315,t2,158,t4,53);
+      s535(315,t2,158,t4,54);
+      s536(315,t2,158,t4,55);
+      s537(315,t2,158,t4,56);
+      s538(315,t2,158,t4,57);
+      s539(315,t2,158,t4,58);
+      s540(315,t2,158,t4,59);
+      s541(315,t2,158,t4,60);
+      s542(315,t2,158,t4,61);
+      s543(315,t2,158,t4,62);
+      s544(315,t2,158,t4,63);
+      s545(315,t2,158,t4,64);
+      s546(315,t2,158,t4,65);
+      for(t6 = 0; t6 <= _iegen_43_iegen_42_iegen_41length-1; t6++) {
+        s547(315,t2,158,t4,66,t6,0);
+      }
+      s548(315,t2,158,t4,67);
+      s549(315,t2,158,t4,68);
+      s550(315,t2,158,t4,69);
+      s551(315,t2,158,t4,70);
+      s552(315,t2,158,t4,71);
+      s553(315,t2,158,t4,72);
     }
   }
 }
@@ -2197,3 +2265,25 @@ if (GeoAc_CalcAmp == 1) {
 #undef s529
 #undef s530
 #undef s531
+#undef s532
+#undef s533
+#undef s534
+#undef s535
+#undef s536
+#undef s537
+#undef s538
+#undef s539
+#undef s540
+#undef s541
+#undef s542
+#undef s543
+#undef s544
+#undef s545
+#undef s546
+#undef s547
+#undef s548
+#undef s549
+#undef s550
+#undef s551
+#undef s552
+#undef s553

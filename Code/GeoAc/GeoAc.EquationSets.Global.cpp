@@ -318,8 +318,8 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
             
             for(int m = 0; m < 3; m++){
                 //sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n, spl.Temp_Spline);
-                sources.ddw[m][0] += R_lt[n]*w_ddiff(r, theta, phi, m, n);
-                sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n, spl.Windv_Spline);
+                //sources.ddw[m][0] += R_lt[n]*w_ddiff(r, theta, phi, m, n);
+                //sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n, spl.Windv_Spline);
                 sources.ddu[m][0] += R_lt[n]*u_ddiff(r, theta, phi, m, n, spl.Windu_Spline);
 
                 sources.ddc[m][1] += R_lp[n]*c_ddiff(r, theta, phi, m, n, spl.Temp_Spline);
