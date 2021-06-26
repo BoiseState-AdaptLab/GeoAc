@@ -279,8 +279,8 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     
     // The following code is only used if amplitudes are to be calculated; the above results are sufficient for producing ray geometry
     //	double R_lt[3], R_lp[3], mu_lt[3], mu_lp[3];
-     #include "codegen.c"
-     if(GeoAc_CalcAmp){
+    #include "codegen.c"
+    if(GeoAc_CalcAmp){
 
     //R_lt[0]  = current_values[6];       R_lt[1]  = current_values[7];       R_lt[2]  = current_values[8];
     //	 	mu_lt[0] = current_values[9];		mu_lt[1] = current_values[10];		mu_lt[2] = current_values[11];
@@ -305,7 +305,7 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
        //}
 
         
-        for(int n = 0; n < 3; n++){
+        //for(int n = 0; n < 3; n++){
             //sources.dc[3] += R_lt[n]*c_diff(r,theta,phi,n,spl.Temp_Spline);
             //sources.dw[3] += R_lt[n]*w_diff(r,theta,phi,n);
             //sources.dv[3] += R_lt[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
@@ -316,7 +316,7 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
             //sources.dv[4] += R_lp[n]*v_diff(r,theta,phi,n,spl.Windv_Spline);
             //sources.du[4] += R_lp[n]*u_diff(r,theta,phi,n,spl.Windu_Spline);
             
-            for(int m = 0; m < 3; m++){
+            //for(int m = 0; m < 3; m++){
                 //sources.ddc[m][0] += R_lt[n]*c_ddiff(r, theta, phi, m, n, spl.Temp_Spline);
                 //sources.ddw[m][0] += R_lt[n]*w_ddiff(r, theta, phi, m, n);
                 //sources.ddv[m][0] += R_lt[n]*v_ddiff(r, theta, phi, m, n, spl.Windv_Spline);
@@ -326,25 +326,25 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
                 //sources.ddw[m][1] += R_lp[n]*w_ddiff(r, theta, phi, m, n);
                 //sources.ddv[m][1] += R_lp[n]*v_ddiff(r, theta, phi, m, n, spl.Windv_Spline);
                 //sources.ddu[m][1] += R_lp[n]*u_ddiff(r, theta, phi, m, n, spl.Windu_Spline);
-            }
-        }
+            //}
+        //}
         
         // Update lt and lp derivatives of eikonal vector magnitude
-		sources.dnu_mag[0] = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/sources.nu_mag;
-		sources.dnu_mag[1] = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/sources.nu_mag;
+		//sources.dnu_mag[0] = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/sources.nu_mag;
+		//sources.dnu_mag[1] = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/sources.nu_mag;
         
 
 		// Update lt and lp derivatives of group velocity
-        sources.dc_gr[0][0] = nu[0]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dw[3];
-        sources.dc_gr[1][0] = nu[1]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dv[3];
-        sources.dc_gr[2][0] = nu[2]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.du[3];
+        //sources.dc_gr[0][0] = nu[0]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dw[3];
+        //sources.dc_gr[1][0] = nu[1]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dv[3];
+        //sources.dc_gr[2][0] = nu[2]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.du[3];
         
-        sources.dc_gr[0][1] = nu[0]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dw[4];
-        sources.dc_gr[1][1] = nu[1]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dv[4];
-        sources.dc_gr[2][1] = nu[2]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.du[4];
+        //sources.dc_gr[0][1] = nu[0]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dw[4];
+        //sources.dc_gr[1][1] = nu[1]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dv[4];
+        //sources.dc_gr[2][1] = nu[2]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.du[4];
 
-        sources.dc_gr_mag[0] = (sources.c_gr[0]*sources.dc_gr[0][0] + sources.c_gr[1]*sources.dc_gr[1][0] + sources.c_gr[2]*sources.dc_gr[2][0])/sources.c_gr_mag;
-        sources.dc_gr_mag[1] = (sources.c_gr[0]*sources.dc_gr[0][1] + sources.c_gr[1]*sources.dc_gr[1][1] + sources.c_gr[2]*sources.dc_gr[2][1])/sources.c_gr_mag;
+        //sources.dc_gr_mag[0] = (sources.c_gr[0]*sources.dc_gr[0][0] + sources.c_gr[1]*sources.dc_gr[1][0] + sources.c_gr[2]*sources.dc_gr[2][0])/sources.c_gr_mag;
+        //sources.dc_gr_mag[1] = (sources.c_gr[0]*sources.dc_gr[0][1] + sources.c_gr[1]*sources.dc_gr[1][1] + sources.c_gr[2]*sources.dc_gr[2][1])/sources.c_gr_mag;
 
         sources.d_GeoCoeff[0][0] = 0.0;
         sources.d_GeoCoeff[1][0] = -R_lt[0]/(pow(r,2));

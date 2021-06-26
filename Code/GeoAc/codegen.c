@@ -666,6 +666,16 @@
 #undef s665
 #undef s666
 #undef s667
+#undef s668
+#undef s669
+#undef s670
+#undef s671
+#undef s672
+#undef s673
+#undef s674
+#undef s675
+#undef s676
+#undef s677
 #define s0(__x0)   double r = current_values[0], theta=current_values[1], phi=current_values[2]; 
 #define s1(__x0)   double nu[3] = {current_values[3], current_values[4], current_values[5]}; 
 #define s2(__x0)   double _iegen_2r = r; 
@@ -1334,6 +1344,16 @@
 #define s665(__x0, n, __x2, m, __x4)   double _iegen_49eval_Spline_ddf_return = _iegen_49_iegen_45eval_Spline_ddf_return; 
 #define s666(__x0, n, __x2, m, __x4)   if(_iegen_49n1==0 && _iegen_49n2==0){_iegen_49u_ddiff_return = _iegen_49eval_Spline_ddf_return;} 
 #define s667(__x0, n, __x2, m, __x4)   sources.ddu[m][1] += R_lp[n]*_iegen_49u_ddiff_return; 
+#define s668(__x0)   sources.dnu_mag[0] = (nu[0]*mu_lt[0] + nu[1]*mu_lt[1] + nu[2]*mu_lt[2])/sources.nu_mag; 
+#define s669(__x0)   sources.dnu_mag[1] = (nu[0]*mu_lp[0] + nu[1]*mu_lp[1] + nu[2]*mu_lp[2])/sources.nu_mag; 
+#define s670(__x0)   sources.dc_gr[0][0] = nu[0]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dw[3]; 
+#define s671(__x0)   sources.dc_gr[1][0] = nu[1]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.dv[3]; 
+#define s672(__x0)   sources.dc_gr[2][0] = nu[2]/sources.nu_mag*sources.dc[3] + sources.c*mu_lt[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[0] + sources.du[3]; 
+#define s673(__x0)   sources.dc_gr[0][1] = nu[0]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[0]/sources.nu_mag - sources.c*nu[0]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dw[4]; 
+#define s674(__x0)   sources.dc_gr[1][1] = nu[1]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[1]/sources.nu_mag - sources.c*nu[1]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.dv[4]; 
+#define s675(__x0)   sources.dc_gr[2][1] = nu[2]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.du[4]; 
+#define s676(__x0)   sources.dc_gr_mag[0] = (sources.c_gr[0]*sources.dc_gr[0][0] + sources.c_gr[1]*sources.dc_gr[1][0] + sources.c_gr[2]*sources.dc_gr[2][0])/sources.c_gr_mag; 
+#define s677(__x0)   sources.dc_gr_mag[1] = (sources.c_gr[0]*sources.dc_gr[0][1] + sources.c_gr[1]*sources.dc_gr[1][1] + sources.c_gr[2]*sources.dc_gr[2][1])/sources.c_gr_mag; 
 
 
 //t1 = 0; 
@@ -2085,6 +2105,16 @@ if (GeoAc_CalcAmp == 1) {
       s667(315,t2,158,t4,186);
     }
   }
+  s668(316);
+  s669(317);
+  s670(318);
+  s671(319);
+  s672(320);
+  s673(321);
+  s674(322);
+  s675(323);
+  s676(324);
+  s677(325);
 }
 
 #undef s0
@@ -2755,3 +2785,13 @@ if (GeoAc_CalcAmp == 1) {
 #undef s665
 #undef s666
 #undef s667
+#undef s668
+#undef s669
+#undef s670
+#undef s671
+#undef s672
+#undef s673
+#undef s674
+#undef s675
+#undef s676
+#undef s677
