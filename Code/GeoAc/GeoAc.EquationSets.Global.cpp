@@ -346,18 +346,18 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
         //sources.dc_gr_mag[0] = (sources.c_gr[0]*sources.dc_gr[0][0] + sources.c_gr[1]*sources.dc_gr[1][0] + sources.c_gr[2]*sources.dc_gr[2][0])/sources.c_gr_mag;
         //sources.dc_gr_mag[1] = (sources.c_gr[0]*sources.dc_gr[0][1] + sources.c_gr[1]*sources.dc_gr[1][1] + sources.c_gr[2]*sources.dc_gr[2][1])/sources.c_gr_mag;
 
-        sources.d_GeoCoeff[0][0] = 0.0;
-        sources.d_GeoCoeff[1][0] = -R_lt[0]/(pow(r,2));
-        sources.d_GeoCoeff[2][0] = -R_lt[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lt[1];
+        //sources.d_GeoCoeff[0][0] = 0.0;
+        //sources.d_GeoCoeff[1][0] = -R_lt[0]/(pow(r,2));
+        //sources.d_GeoCoeff[2][0] = -R_lt[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lt[1];
  
-        sources.d_GeoCoeff[0][1] = 0.0;
-        sources.d_GeoCoeff[1][1] = -R_lp[0]/(pow(r,2));
-        sources.d_GeoCoeff[2][1] = -R_lp[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lp[1];
+        //sources.d_GeoCoeff[0][1] = 0.0;
+        //sources.d_GeoCoeff[1][1] = -R_lp[0]/(pow(r,2));
+        //sources.d_GeoCoeff[2][1] = -R_lp[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lp[1];
         
-        sources.d_GeoTerms[0][0] = 0.0;
-        sources.d_GeoTerms[1][0] = (mu_lt[0]*sources.v + nu[0]*sources.dv[3] - mu_lt[1]*sources.w - nu[1] * sources.dw[3]);
-        sources.d_GeoTerms[2][0] = (mu_lt[0]*sources.u + nu[0]*sources.du[3] - mu_lt[2]*sources.w - nu[2] * sources.dw[3])*cos(theta) - (nu[0]*sources.u - nu[2]*sources.w)*R_lt[1]*sin(theta)
-                                            + (mu_lt[1]*sources.u + nu[1]*sources.du[3] - mu_lt[2]*sources.v - nu[2] * sources.dv[3])*sin(theta) + (nu[1]*sources.u - nu[2]*sources.v)*R_lt[1]*cos(theta);
+        //sources.d_GeoTerms[0][0] = 0.0;
+        //sources.d_GeoTerms[1][0] = (mu_lt[0]*sources.v + nu[0]*sources.dv[3] - mu_lt[1]*sources.w - nu[1] * sources.dw[3]);
+        //sources.d_GeoTerms[2][0] = (mu_lt[0]*sources.u + nu[0]*sources.du[3] - mu_lt[2]*sources.w - nu[2] * sources.dw[3])*cos(theta) - (nu[0]*sources.u - nu[2]*sources.w)*R_lt[1]*sin(theta)
+        //                                   + (mu_lt[1]*sources.u + nu[1]*sources.du[3] - mu_lt[2]*sources.v - nu[2] * sources.dv[3])*sin(theta) + (nu[1]*sources.u - nu[2]*sources.v)*R_lt[1]*cos(theta);
         
         sources.d_GeoTerms[0][0] += -R_lt[0]/pow(r,2)*(nu[1]*sources.c_gr[1] + nu[2]*sources.c_gr[2])
                                             + 1.0/r*(mu_lt[1]*sources.c_gr[1] + nu[1]*sources.dc_gr[1][0] + mu_lt[2]*sources.c_gr[2] + nu[2]*sources.dc_gr[2][0]);

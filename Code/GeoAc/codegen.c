@@ -676,6 +676,15 @@
 #undef s675
 #undef s676
 #undef s677
+#undef s678
+#undef s679
+#undef s680
+#undef s681
+#undef s682
+#undef s683
+#undef s684
+#undef s685
+#undef s686
 #define s0(__x0)   double r = current_values[0], theta=current_values[1], phi=current_values[2]; 
 #define s1(__x0)   double nu[3] = {current_values[3], current_values[4], current_values[5]}; 
 #define s2(__x0)   double _iegen_2r = r; 
@@ -1354,6 +1363,15 @@
 #define s675(__x0)   sources.dc_gr[2][1] = nu[2]/sources.nu_mag*sources.dc[4] + sources.c*mu_lp[2]/sources.nu_mag - sources.c*nu[2]/pow(sources.nu_mag,2) * sources.dnu_mag[1] + sources.du[4]; 
 #define s676(__x0)   sources.dc_gr_mag[0] = (sources.c_gr[0]*sources.dc_gr[0][0] + sources.c_gr[1]*sources.dc_gr[1][0] + sources.c_gr[2]*sources.dc_gr[2][0])/sources.c_gr_mag; 
 #define s677(__x0)   sources.dc_gr_mag[1] = (sources.c_gr[0]*sources.dc_gr[0][1] + sources.c_gr[1]*sources.dc_gr[1][1] + sources.c_gr[2]*sources.dc_gr[2][1])/sources.c_gr_mag; 
+#define s678(__x0)   sources.d_GeoCoeff[0][0] = 0.0; 
+#define s679(__x0)   sources.d_GeoCoeff[1][0] = -R_lt[0]/(pow(r,2)); 
+#define s680(__x0)   sources.d_GeoCoeff[2][0] = -R_lt[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lt[1]; 
+#define s681(__x0)   sources.d_GeoCoeff[0][1] = 0.0; 
+#define s682(__x0)   sources.d_GeoCoeff[1][1] = -R_lp[0]/(pow(r,2)); 
+#define s683(__x0)   sources.d_GeoCoeff[2][1] = -R_lp[0]/(pow(r,2)*cos(theta)) + sin(theta)/(r*pow(cos(theta),2))*R_lp[1]; 
+#define s684(__x0)   sources.d_GeoTerms[0][0] = 0.0; 
+#define s685(__x0)   sources.d_GeoTerms[1][0] = (mu_lt[0]*sources.v + nu[0]*sources.dv[3] - mu_lt[1]*sources.w - nu[1] * sources.dw[3]); 
+#define s686(__x0)   sources.d_GeoTerms[2][0] = (mu_lt[0]*sources.u + nu[0]*sources.du[3] - mu_lt[2]*sources.w - nu[2] * sources.dw[3])*cos(theta) - (nu[0]*sources.u - nu[2]*sources.w)*R_lt[1]*sin(theta)+ (mu_lt[1]*sources.u + nu[1]*sources.du[3] - mu_lt[2]*sources.v - nu[2] * sources.dv[3])*sin(theta) + (nu[1]*sources.u - nu[2]*sources.v)*R_lt[1]*cos(theta); 
 
 
 //t1 = 0; 
@@ -2116,6 +2134,15 @@ if (GeoAc_CalcAmp == 1) {
   s676(324);
   s677(325);
 }
+s678(326);
+s679(327);
+s680(328);
+s681(329);
+s682(330);
+s683(331);
+s684(332);
+s685(333);
+s686(334);
 
 #undef s0
 #undef s1
@@ -2795,3 +2822,12 @@ if (GeoAc_CalcAmp == 1) {
 #undef s675
 #undef s676
 #undef s677
+#undef s678
+#undef s679
+#undef s680
+#undef s681
+#undef s682
+#undef s683
+#undef s684
+#undef s685
+#undef s686
