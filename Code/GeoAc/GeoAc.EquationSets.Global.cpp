@@ -227,6 +227,52 @@ double GeoAc_Set_ds(double* current_values){
 //---------------------------------------//
 void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Sources_Struct &sources, 
 			 SplineStruct &spl){
+    int& spl_Temp_Spline_length = spl.Temp_Spline.length;
+    int& spl_Temp_Spline_accel = spl.Temp_Spline.accel;
+    double* spl_Temp_Spline_x_vals = spl.Temp_Spline.x_vals;
+    double* spl_Temp_Spline_f_vals = spl.Temp_Spline.f_vals;
+    double* spl_Temp_Spline_slopes = spl.Temp_Spline.slopes;
+    int& spl_Windu_Spline_length = spl.Windu_Spline.length;
+    int& spl_Windu_Spline_accel = spl.Windu_Spline.accel;
+    double* spl_Windu_Spline_x_vals = spl.Windu_Spline.x_vals;
+    double* spl_Windu_Spline_f_vals = spl.Windu_Spline.f_vals;
+    double* spl_Windu_Spline_slopes = spl.Windu_Spline.slopes;
+    int& spl_Windv_Spline_length = spl.Windv_Spline.length;
+    int& spl_Windv_Spline_accel = spl.Windv_Spline.accel;
+    double* spl_Windv_Spline_x_vals = spl.Windv_Spline.x_vals;
+    double* spl_Windv_Spline_f_vals = spl.Windv_Spline.f_vals;
+    double* spl_Windv_Spline_slopes = spl.Windv_Spline.slopes;
+    int& spl_Density_Spline_length = spl.Density_Spline.length;
+    int& spl_Density_Spline_accel = spl.Density_Spline.accel;
+    double* spl_Density_Spline_x_vals = spl.Density_Spline.x_vals;
+    double* spl_Density_Spline_f_vals = spl.Density_Spline.f_vals;
+    double* spl_Density_Spline_slopes = spl.Density_Spline.slopes;
+    double* sources_src_loc = sources.src_loc;
+    double& sources_c0 = sources.c0;
+    double& sources_c = sources.c;
+    double* sources_dc = sources.dc;
+    double(*sources_ddc)[2] = sources.ddc;
+    double& sources_w = sources.w;
+    double* sources_dw = sources.dw;
+    double(*sources_ddw)[2] = sources.ddw;
+    double& sources_v = sources.v;
+    double* sources_dv = sources.dv;
+    double(*sources_ddv)[2] = sources.ddv;
+    double& sources_u = sources.u;
+    double* sources_du = sources.du;
+    double(*sources_ddu)[2] = sources.ddu;
+    double& sources_nu0 = sources.nu0;
+    double& sources_nu_mag = sources.nu_mag;
+    double* sources_dnu_mag = sources.dnu_mag;
+    double* sources_c_gr = sources.c_gr;
+    double& sources_c_gr_mag = sources.c_gr_mag;
+    double(*sources_dc_gr)[2] = sources.dc_gr;
+    double* sources_dc_gr_mag = sources.dc_gr_mag;
+    double* sources_GeoCoeff = sources.GeoCoeff;
+    double(*sources_d_GeoCoeff)[2] = sources.d_GeoCoeff;
+    double* sources_GeoTerms = sources.GeoTerms;
+    double(*sources_d_GeoTerms)[2] = sources.d_GeoTerms;
+    #include "codegen.c"
 
     // Extract ray location and eikonal vector components
     //double r = current_values[0],		theta = current_values[1], 	phi = current_values[2];
@@ -279,7 +325,6 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
     
     // The following code is only used if amplitudes are to be calculated; the above results are sufficient for producing ray geometry
     //	double R_lt[3], R_lp[3], mu_lt[3], mu_lp[3];
-    #include "codegen.c"
     //if(GeoAc_CalcAmp){
 
     //R_lt[0]  = current_values[6];       R_lt[1]  = current_values[7];       R_lt[2]  = current_values[8];
@@ -376,6 +421,7 @@ void GeoAc_UpdateSources(double ray_length, double* current_values, GeoAc_Source
 
    //}
 }
+
 //-----------------------------------------------------------//
 //-------Evaluate the Source Equation For Specific Index-----//
 //-----------------------------------------------------------//
